@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Settings, User, Users, GitBranch, Plug, Database, Bell, Shield } from "lucide-react";
 
-const settingsSections = [
+const navigation = [
   { name: "Perfil", icon: User, href: "/settings/profile", description: "Gestiona tu información personal" },
   { name: "Equipo", icon: Users, href: "/settings/team", description: "Administra usuarios y roles" },
   { name: "Pipeline", icon: GitBranch, href: "/settings/pipeline", description: "Configura las etapas del pipeline" },
@@ -27,16 +28,18 @@ export default function SettingsPage() {
         <UserButton />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {settingsSections.map((section) => (
-          <Card key={section.name} className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <section.icon className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base">{section.name}</CardTitle>
-              </div>
-              <CardDescription>{section.description}</CardDescription>
-            </CardHeader>
-          </Card>
+        {navigation.map((item) => (
+          <Link key={item.name} href={item.href}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-base">{item.name}</CardTitle>
+                </div>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         ))}
       </div>
       <Card>
