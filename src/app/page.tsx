@@ -22,7 +22,7 @@ export default async function HomePage() {
                 <Link href="/dashboard">
                   <Button variant="outline">Ir al Dashboard</Button>
                 </Link>
-                <UserButton afterSignOutUrl="/" />
+                <UserButton />
               </>
             ) : (
               <>
