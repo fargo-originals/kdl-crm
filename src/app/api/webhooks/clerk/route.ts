@@ -53,6 +53,12 @@ export async function POST(req: Request) {
     const email = email_addresses?.[0]?.email_address;
 
     if (email) {
+      const { count } = await supabaseServer
+        .from("users")
+        .select("*", { count: "exact", head: true });
+
+      const role = count === 0 ? "owner" : "seller";
+
       const { error } = await supabaseServer
         .from("users")
         .upsert({
@@ -61,6 +67,7 @@ export async function POST(req: Request) {
           first_name: first_name || "",
           last_name: last_name || "",
           avatar_url: image_url || "",
+          role,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: "clerk_id",
