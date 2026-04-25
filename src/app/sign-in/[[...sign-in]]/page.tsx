@@ -10,10 +10,7 @@ export default function SignInPage() {
           <h1 className="mt-4 text-2xl font-bold">KDL CRM</h1>
           <p className="text-sm text-muted-foreground">Inicia sesión</p>
         </div>
-        <SignIn 
-          routing="virtual"
-          redirectUrl="/dashboard"
-        />
+        <SignIn />
       </div>
     </div>
   );

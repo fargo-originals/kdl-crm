@@ -10,10 +10,7 @@ export default function SignUpPage() {
           <h1 className="mt-4 text-2xl font-bold">KDL CRM</h1>
           <p className="text-sm text-muted-foreground">Crea tu cuenta</p>
         </div>
-        <SignUp 
-          routing="virtual"
-          redirectUrl="/dashboard"
-        />
+        <SignUp />
       </div>
     </div>
   );
