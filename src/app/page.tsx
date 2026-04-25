@@ -1,42 +1,14 @@
+import { auth, redirectToSignIn } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { UserButton } from "@clerk/nextjs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Building2, DollarSign, Ticket, BarChart3, Bell } from "lucide-react";
 
-const features = [
-  {
-    title: "Gestión de Contactos",
-    description: "Administra todos tus contactos y leads en un solo lugar.",
-    icon: Users,
-  },
-  {
-    title: "Empresas",
-    description: "Organiza y gestiona tus cuentas empresariales.",
-    icon: Building2,
-  },
-  {
-    title: "Pipeline de Ventas",
-    description: "Visualiza y sigue tu embudo de ventas con facilidad.",
-    icon: DollarSign,
-  },
-  {
-    title: "Tickets de Soporte",
-    description: "Gestiona las solicitudes de tus clientes.",
-    icon: Ticket,
-  },
-  {
-    title: "Informes y Analytics",
-    description: "Métricas en tiempo real para mejores decisiones.",
-    icon: BarChart3,
-  },
-  {
-    title: "Notificaciones",
-    description: "Recibe alertas sobre cambios importantes.",
-    icon: Bell,
-  },
-];
+export default async function HomePage() {
+  const { userId } = await auth();
 
-export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -45,12 +17,23 @@ export default function HomePage() {
             KDL CRM
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/sign-in" className="text-sm font-medium text-muted-foreground hover:text-primary">
-              Iniciar sesión
-            </Link>
-            <Link href="/sign-up">
-              <Button>Empezar gratis</Button>
-            </Link>
+            {userId ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="outline">Ir al Dashboard</Button>
+                </Link>
+                <UserButton afterSignOutUrl="/" />
+              </>
+            ) : (
+              <>
+                <Link href="/sign-in" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                  Iniciar sesión
+                </Link>
+                <Link href="/sign-up">
+                  <Button>Empezar gratis</Button>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -63,38 +46,81 @@ export default function HomePage() {
             Gestiona tus relaciones con clientes de manera eficiente y profesional
           </p>
           <div className="flex justify-center gap-4">
-            <Link href="/sign-up">
-              <Button size="lg">Empezar gratis</Button>
-            </Link>
-            <Link href="/sign-in">
-              <Button variant="outline" size="lg">
-                Ver demo
-              </Button>
-            </Link>
+            {userId ? (
+              <Link href="/dashboard">
+                <Button size="lg">Ir al Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/sign-up">
+                  <Button size="lg">Empezar gratis</Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button variant="outline" size="lg">
+                    Ver demo
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </section>
         <section className="mb-16">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <Card key={feature.title}>
-                <CardHeader>
-                  <feature.icon className="mb-2 h-8 w-8 text-primary" />
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+            <Card>
+              <CardHeader>
+                <Users className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Gestión de Contactos</CardTitle>
+                <CardDescription>Administra todos tus contactos y leads en un solo lugar.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Building2 className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Empresas</CardTitle>
+                <CardDescription>Organiza y gestiona tus cuentas empresariales.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <DollarSign className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Pipeline de Ventas</CardTitle>
+                <CardDescription>Visualiza y sigue tu embudo de ventas con facilidad.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Ticket className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Tickets de Soporte</CardTitle>
+                <CardDescription>Gestiona las solicitudes de tus clientes.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <BarChart3 className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Informes y Analytics</CardTitle>
+                <CardDescription>Métricas en tiempo real para mejores decisiones.</CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Bell className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Notificaciones</CardTitle>
+                <CardDescription>Recibe alertas sobre cambios importantes.</CardDescription>
+              </CardHeader>
+            </Card>
           </div>
         </section>
-        <section className="text-center">
-          <h2 className="mb-4 text-2xl font-bold">¿Listo para empezar?</h2>
-          <p className="mb-6 text-muted-foreground">
-            Únete a cientos de equipos que ya usan KDL CRM
-          </p>
-          <Link href="/sign-up">
-            <Button size="lg">Crear cuenta gratuita</Button>
-          </Link>
-        </section>
+        {!userId && (
+          <section className="text-center">
+            <h2 className="mb-4 text-2xl font-bold">¿Listo para empezar?</h2>
+            <p className="mb-6 text-muted-foreground">
+              Únete a cientos de equipos que ya usan KDL CRM
+            </p>
+            <Link href="/sign-up">
+              <Button size="lg">Crear cuenta gratuita</Button>
+            </Link>
+          </section>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,15 @@
+import { auth, redirectToSignIn } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
 import { Globe } from "lucide-react";
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const { userId } = await auth();
+  
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md p-8">
