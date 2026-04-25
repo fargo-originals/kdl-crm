@@ -1,4 +1,4 @@
-import { auth, redirectToSignIn } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
 import { Globe } from "lucide-react";
