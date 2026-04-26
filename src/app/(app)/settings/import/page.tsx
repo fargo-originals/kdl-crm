@@ -80,25 +80,20 @@ export default function ImportDataPage() {
     let success = 0;
     let failed = 0;
     for (const contact of parsedData) {
-      if (!contact.email && !contact.first_name) {
-        failed++;
-        continue;
-      }
-      const { error } = await supabase.from("contacts").insert({
-        first_name: contact.first_name,
-        last_name: contact.last_name,
-        email: contact.email || null,
-        phone: contact.phone || null,
-        job_title: contact.job_title || null,
-        lifecycle_stage: "lead",
-        status: "active",
+      if (!contact.email && !contact.first_name) { failed++; continue; }
+      const res = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          email: contact.email || null,
+          phone: contact.phone || null,
+          job_title: contact.job_title || null,
+          lifecycle_stage: "lead",
+        }),
       });
-      if (error) {
-        console.error("Error inserting:", error);
-        failed++;
-      } else {
-        success++;
-      }
+      if (!res.ok) { failed++; } else { success++; }
     }
     setResult({ success, failed });
     setImporting(false);
@@ -146,9 +141,19 @@ export default function ImportDataPage() {
             <div className="flex items-center justify-between rounded-md border p-4">
               <div className="flex items-center gap-3">
                 <File className="h-6 w-6 text-muted-foreground" />
-                <span className="font-medium">{file.name}</span>
+                <div>
+                  <span className="font-medium">{file.name}</span>
+                  {parsedData.length > 0 && <p className="text-sm text-muted-foreground">{parsedData.length} contactos listos para importar</p>}
+                </div>
               </div>
-              <button className="text-sm text-muted-foreground" onClick={clearAll}>Quitar</button>
+              <div className="flex items-center gap-2">
+                {parsedData.length > 0 && (
+                  <Button size="sm" onClick={handleImport} disabled={importing}>
+                    {importing ? "Importando..." : `Importar ${parsedData.length}`}
+                  </Button>
+                )}
+                <button className="text-sm text-muted-foreground hover:text-foreground" onClick={clearAll}>Quitar</button>
+              </div>
             </div>
           )}
         </CardContent>

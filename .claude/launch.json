@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kdl-crm",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "C:\\PROYECTOS\\skills\\the-architect\\kdl-crm", "dev"],
+      "port": 3000,
+      "autoPort": false
+    }
+  ]
+}
