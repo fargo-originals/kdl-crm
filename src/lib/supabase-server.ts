@@ -1,14 +1,28 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+let _instance: SupabaseClient | null = null;
 
-export const supabaseServer = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    persistSession: false,
+function getInstance(): SupabaseClient {
+  if (!_instance) {
+    _instance = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+  }
+  return _instance;
+}
+
+export function getSupabaseServer(): SupabaseClient {
+  return getInstance();
+}
+
+// Lazy proxy — no llama createClient al importar el módulo,
+// solo cuando se accede a una propiedad (.from, .rpc, etc.)
+export const supabaseServer: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop, _receiver) {
+    const instance = getInstance();
+    const value = (instance as any)[prop];
+    return typeof value === "function" ? value.bind(instance) : value;
   },
 });
-
-export function getSupabaseServer() {
-  return supabaseServer;
-}

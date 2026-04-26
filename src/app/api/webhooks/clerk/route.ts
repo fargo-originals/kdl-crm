@@ -29,14 +29,14 @@ export async function POST(req: Request) {
     return new Response("Missing svix headers", { status: 400 });
   }
 
-  const payload = await req.json();
-  const event = payload as WebhookEvent;
+  const body = await req.text();
+  const payload = JSON.parse(body) as WebhookEvent;
 
   const wh = new Webhook(WEBHOOK_SECRET);
   let msg: WebhookEvent;
 
   try {
-    msg = wh.verify(payload, {
+    msg = wh.verify(body, {
       "svix-id": svix_id,
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
