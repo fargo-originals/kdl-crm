@@ -199,3 +199,48 @@ INSERT INTO pipeline_stages (name, position, color, probability_default, is_won,
   ('Negotiation', 4, '#F97316', 90, false, false),
   ('Closed Won', 5, '#16A34A', 100, true, false),
   ('Closed Lost', 6, '#DC2626', 0, false, true);
+-- Prospect Searches table
+CREATE TABLE IF NOT EXISTS prospect_searches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  query TEXT NOT NULL,
+  location TEXT NOT NULL,
+  sources TEXT[] NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  results_count INTEGER DEFAULT 0,
+  imported_count INTEGER DEFAULT 0,
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_prospect_searches_user_id ON prospect_searches(user_id);
+
+ALTER TABLE prospect_searches ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Prospect searches open" ON prospect_searches FOR ALL USING (true) WITH CHECK (true);
+
+-- Prospect Results table
+CREATE TABLE IF NOT EXISTS prospect_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  search_id UUID NOT NULL REFERENCES prospect_searches(id) ON DELETE CASCADE,
+  source TEXT NOT NULL,
+  name TEXT NOT NULL,
+  address TEXT,
+  city TEXT,
+  phone TEXT,
+  email TEXT,
+  website TEXT,
+  rating TEXT,
+  review_count INTEGER,
+  category TEXT,
+  price_level TEXT,
+  raw_data JSONB,
+  status TEXT NOT NULL DEFAULT 'new',
+  company_id UUID REFERENCES companies(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_prospect_results_search_id ON prospect_results(search_id);
+
+ALTER TABLE prospect_results ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Prospect results open" ON prospect_results FOR ALL USING (true) WITH CHECK (true);
