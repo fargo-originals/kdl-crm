@@ -147,3 +147,37 @@ export const integrations = pgTable('integrations', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+export const prospectSearches = pgTable('prospect_searches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  query: text('query').notNull(),
+  location: text('location').notNull(),
+  sources: text('sources').array().notNull(),
+  status: text('status').notNull().default('pending'),
+  resultsCount: integer('results_count').default(0),
+  importedCount: integer('imported_count').default(0),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+});
+
+export const prospectResults = pgTable('prospect_results', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  searchId: uuid('search_id').references(() => prospectSearches.id).notNull(),
+  source: text('source').notNull(),
+  name: text('name').notNull(),
+  address: text('address'),
+  city: text('city'),
+  phone: text('phone'),
+  email: text('email'),
+  website: text('website'),
+  rating: text('rating'),
+  reviewCount: integer('review_count'),
+  category: text('category'),
+  priceLevel: text('price_level'),
+  rawData: jsonb('raw_data'),
+  status: text('status').notNull().default('new'),
+  companyId: uuid('company_id').references(() => companies.id),
+  createdAt: timestamp('created_at').defaultNow(),
+});
