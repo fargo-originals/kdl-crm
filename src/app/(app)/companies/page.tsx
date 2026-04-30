@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import { Plus, Search, Globe, MapPin, Users, Loader2 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -41,6 +42,7 @@ const sizes = [
 const emptyForm = { name: "", domain: "", industry: "", size: "", city: "", country: "", phone: "", website: "" };
 
 export default function CompaniesPage() {
+  const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -102,7 +104,7 @@ export default function CompaniesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((company) => (
-            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/companies/${company.id}`)}>
               <CardHeader>
                 <CardTitle className="text-lg">{company.name}</CardTitle>
                 {company.domain && <p className="text-sm text-muted-foreground flex items-center gap-1"><Globe className="h-3 w-3" />{company.domain}</p>}

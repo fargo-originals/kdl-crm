@@ -26,6 +26,7 @@ export const companies = pgTable('companies', {
   country: text('country'),
   phone: text('phone'),
   website: text('website'),
+  notes: text('notes'),
   ownerId: uuid('owner_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
