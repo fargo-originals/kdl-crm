@@ -157,6 +157,52 @@ CREATE TABLE IF NOT EXISTS integrations (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Prospect Searches table
+CREATE TABLE IF NOT EXISTS prospect_searches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  sector TEXT NOT NULL,
+  zone TEXT NOT NULL,
+  zone_type TEXT NOT NULL DEFAULT 'barrio',
+  keywords TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  total_results INTEGER DEFAULT 0,
+  enriched_count INTEGER DEFAULT 0,
+  imported_count INTEGER DEFAULT 0,
+  apify_run_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Prospect Results table
+CREATE TABLE IF NOT EXISTS prospect_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  search_id UUID NOT NULL REFERENCES prospect_searches(id),
+  google_place_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  address TEXT,
+  district TEXT,
+  neighborhood TEXT,
+  phone TEXT,
+  website TEXT,
+  google_rating NUMERIC(2,1),
+  google_review_count INTEGER DEFAULT 0,
+  category TEXT,
+  email TEXT,
+  instagram TEXT,
+  contact_name TEXT,
+  contact_title TEXT,
+  tripadvisor_rating NUMERIC(2,1),
+  enrichment_status TEXT NOT NULL DEFAULT 'pending',
+  enrichment_data JSONB,
+  review_status TEXT NOT NULL DEFAULT 'pending',
+  imported_at TIMESTAMPTZ,
+  imported_contact_id UUID REFERENCES contacts(id),
+  imported_company_id UUID REFERENCES companies(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Create indexes
 CREATE INDEX idx_contacts_owner_id ON contacts(owner_id);
 CREATE INDEX idx_contacts_company_id ON contacts(company_id);
@@ -167,6 +213,9 @@ CREATE INDEX idx_tickets_assignee_id ON tickets(assignee_id);
 CREATE INDEX idx_tasks_assignee_id ON tasks(assignee_id);
 CREATE INDEX idx_activities_contact_id ON activities(contact_id);
 CREATE INDEX idx_activities_deal_id ON activities(deal_id);
+CREATE INDEX idx_prospect_searches_user_id ON prospect_searches(user_id);
+CREATE INDEX idx_prospect_results_search_id ON prospect_results(search_id);
+CREATE INDEX idx_prospect_results_google_place_id ON prospect_results(google_place_id);
 
 -- Enable Row Level Security
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -178,6 +227,8 @@ ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pipeline_stages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prospect_searches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE prospect_results ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies (allow all for authenticated users - to be refined)
 CREATE POLICY "Users can do anything" ON users FOR ALL USING (true) WITH CHECK (true);
@@ -189,6 +240,8 @@ CREATE POLICY "Tasks can do anything" ON tasks FOR ALL USING (true) WITH CHECK (
 CREATE POLICY "Activities can do anything" ON activities FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Pipeline can do anything" ON pipeline_stages FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Integrations can do anything" ON integrations FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Prospect searches can do anything" ON prospect_searches FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Prospect results can do anything" ON prospect_results FOR ALL USING (true) WITH CHECK (true);
 
 -- Insert default pipeline stages
 INSERT INTO pipeline_stages (name, position, color, probability_default, is_won, is_lost) VALUES
