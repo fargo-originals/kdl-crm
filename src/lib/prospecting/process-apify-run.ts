@@ -64,6 +64,15 @@ export async function processApifyRun(runId: string) {
 
   if (resultsError) throw new Error(resultsError.message);
 
+  // Resultados sin web nunca entran en Apify — marcarlos como done directamente
+  const noWebsiteIds = (results ?? []).filter((r) => !r.website).map((r) => r.id);
+  if (noWebsiteIds.length > 0) {
+    await supabaseServer
+      .from("prospect_results")
+      .update({ enrichment_status: "done", updated_at: new Date().toISOString() })
+      .in("id", noWebsiteIds);
+  }
+
   let enrichedCount = 0;
   for (const result of results ?? []) {
     if (!result.website) continue;

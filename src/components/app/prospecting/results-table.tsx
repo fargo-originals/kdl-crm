@@ -26,7 +26,11 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
     initialData,
     refetchInterval: (currentQuery) => {
       const data = currentQuery.state.data as SearchResultsPayload | undefined;
-      return data?.results.some((result) => result.enrichment_status === "enriching") ? 10000 : false;
+      if (!data) return false;
+      // Parar si la búsqueda ya terminó (señal autoritativa del webhook)
+      if (data.search.status === "done" || data.search.status === "failed") return false;
+      // Parar si ningún resultado sigue enriqueciendo
+      return data.results.some((result) => result.enrichment_status === "enriching") ? 10000 : false;
     },
   });
 
