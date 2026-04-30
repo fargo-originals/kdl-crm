@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Loader2, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportButton } from "@/components/app/prospecting/import-button";
@@ -16,9 +16,28 @@ async function fetchSearchResults(searchId: string): Promise<SearchResultsPayloa
   return payload.data as SearchResultsPayload;
 }
 
+const AUTO_SYNC_AFTER_MS = 3 * 60 * 1000; // 3 minutos sin webhook → sync automático
+
+async function syncSearch(searchId: string): Promise<void> {
+  await fetch("/api/prospecting/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ searchId }),
+  });
+}
+
 export function ResultsTable({ initialData }: { initialData: SearchResultsPayload }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
+  const syncedRef = useRef(false);
+  const enrichingStartRef = useRef<number>(Date.now());
+
+  const syncMutation = useMutation({
+    mutationFn: () => syncSearch(initialData.search.id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["prospecting", "results", initialData.search.id] });
+    },
+  });
 
   const query = useQuery({
     queryKey: ["prospecting", "results", initialData.search.id],
@@ -27,10 +46,15 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
     refetchInterval: (currentQuery) => {
       const data = currentQuery.state.data as SearchResultsPayload | undefined;
       if (!data) return false;
-      // Parar si la búsqueda ya terminó (señal autoritativa del webhook)
       if (data.search.status === "done" || data.search.status === "failed") return false;
-      // Parar si ningún resultado sigue enriqueciendo
-      return data.results.some((result) => result.enrichment_status === "enriching") ? 10000 : false;
+      const isEnriching = data.results.some((r) => r.enrichment_status === "enriching");
+      if (!isEnriching) return false;
+      // Fallback: si lleva más de 3 min enriqueciendo y el webhook no llegó, sync automático
+      if (!syncedRef.current && Date.now() - enrichingStartRef.current > AUTO_SYNC_AFTER_MS) {
+        syncedRef.current = true;
+        syncMutation.mutate();
+      }
+      return 10000;
     },
   });
 
@@ -93,6 +117,19 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
             {query.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
           <div className="flex flex-wrap gap-2">
+            {(data.search.status === "enriching") && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={syncMutation.isPending}
+                onClick={() => syncMutation.mutate()}
+              >
+                {syncMutation.isPending
+                  ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  : <RefreshCw className="mr-2 h-4 w-4" />}
+                Sincronizar con Apify
+              </Button>
+            )}
             <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => bulkReview("approved")}>
               <Check className="mr-2 h-4 w-4" />
               Aprobar
