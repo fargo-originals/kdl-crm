@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LeadInquirySchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
+import { enqueueAgentRun } from '@/lib/agents';
+import { notify } from '@/lib/notifications';
 
 export async function POST(req: NextRequest) {
   // CORS
@@ -88,6 +90,19 @@ export async function POST(req: NextRequest) {
     contact_id: contactUpsert.data?.id ?? null,
     user_id: assignedTo,
   });
+
+  // Notify assigned user
+  if (assignedTo) {
+    notify(assignedTo, 'lead.received', {
+      title: `Nuevo lead: ${data.fullName}`,
+      body: `${data.email}${data.businessName ? ` · ${data.businessName}` : ''}`,
+      data: { leadId: lead.id },
+      leadId: lead.id,
+    }).catch(err => console.error('Notify error:', err));
+  }
+
+  // Start AI agent conversation
+  enqueueAgentRun(lead.id).catch(err => console.error('Agent enqueue failed:', err));
 
   return NextResponse.json({ ok: true, leadId: lead.id }, { status: 201 });
 }
