@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Building2, DollarSign, Ticket, CheckSquare, Settings, Radar, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Building2, DollarSign, Ticket, CheckSquare, Settings, Radar, LogOut, Inbox, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
 
@@ -15,6 +15,8 @@ const navigation = [
   { name: "Prospeccion", href: "/prospecting", icon: Radar },
   { name: "Tickets", href: "/tickets", icon: Ticket },
   { name: "Tareas", href: "/tasks", icon: CheckSquare },
+  { name: "Leads", href: "/leads", icon: Inbox },
+  { name: "Landing CMS", href: "/landing", icon: Globe },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
@@ -36,11 +38,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <nav className="flex-1 space-y-1 p-4">
             {navigation.map((item) => {
-              const isActive = item.href === "/settings"
-                ? pathname.startsWith("/settings")
-                : item.href === "/prospecting"
-                  ? pathname.startsWith("/prospecting")
-                  : pathname === item.href;
+              const isActive = ["/settings", "/prospecting", "/leads", "/landing"].includes(item.href)
+                ? pathname.startsWith(item.href)
+                : pathname === item.href;
               return (
                 <Link
                   key={item.name}
