@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSessionFromRequest } from '@/lib/auth/session';
+import { verifyToken, COOKIE } from '@/lib/auth/jwt';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -17,10 +17,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = await getSessionFromRequest(req);
+  const token = req.cookies.get(COOKIE)?.value;
+  const session = token ? await verifyToken(token) : null;
   if (!session) {
-    const loginUrl = new URL('/login', req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL('/login', req.url));
   }
 
   return NextResponse.next();
