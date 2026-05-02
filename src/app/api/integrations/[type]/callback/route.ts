@@ -6,7 +6,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
   const { type } = await params;
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
-  const state = searchParams.get("state"); // clerk userId
+  const state = searchParams.get("state"); // userId (session.sub)
   const error = searchParams.get("error");
 
   if (error || !code || !state) {
@@ -62,15 +62,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
       redirect("/settings/integrations?error=token_failed");
     }
 
-    const { data: dbUser } = await supabaseServer.from("users").select("id").eq("clerk_id", state).maybeSingle();
-    if (!dbUser) redirect("/settings/integrations?error=user_not_found");
-
     const expiresAt = tokenData.expires_in
       ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
       : null;
 
     await supabaseServer.from("integrations").upsert({
-      user_id: dbUser!.id,
+      user_id: state,
       type,
       access_token: tokenData.access_token,
       refresh_token: tokenData.refresh_token || null,

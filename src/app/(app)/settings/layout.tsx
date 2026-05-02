@@ -1,6 +1,4 @@
 import type { ReactNode } from "react";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { User, Users, GitBranch, Plug, Database, Bell, Shield } from "lucide-react";
 

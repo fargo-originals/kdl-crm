@@ -1,10 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
 
@@ -20,8 +20,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();

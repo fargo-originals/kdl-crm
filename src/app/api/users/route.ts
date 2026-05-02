@@ -1,10 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await supabaseServer
     .from("users")
@@ -17,8 +17,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const { email, first_name, last_name, role = "seller" } = body;

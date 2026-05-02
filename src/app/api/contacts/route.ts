@@ -1,10 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await supabaseServer
     .from("contacts")
@@ -16,20 +16,14 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
 
-  const { data: dbUser } = await supabaseServer
-    .from("users")
-    .select("id")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-
   const { data, error } = await supabaseServer
     .from("contacts")
-    .insert({ ...body, owner_id: dbUser?.id })
+    .insert({ ...body, owner_id: session.sub })
     .select()
     .single();
 

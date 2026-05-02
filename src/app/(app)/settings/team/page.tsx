@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +27,6 @@ const roles = [
 ];
 
 export default function TeamSettingsPage() {
-  const { user: clerkUser, isLoaded } = useUser();
   const [users, setUsers] = useState<TeamUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -81,7 +79,7 @@ export default function TeamSettingsPage() {
     setAdding(false);
   }
 
-  if (!isLoaded || loading) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div><h1 className="text-3xl font-bold">Equipo</h1><p className="text-muted-foreground">Administra usuarios y roles</p></div>
@@ -139,7 +137,6 @@ export default function TeamSettingsPage() {
                       <p className="font-medium truncate">
                         {user.first_name} {user.last_name}
                         {!user.first_name && !user.last_name && <span className="text-muted-foreground">Sin nombre</span>}
-                        {user.clerk_id === clerkUser?.id && <span className="ml-2 text-xs text-muted-foreground">(tú)</span>}
                       </p>
                       <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                     </div>
@@ -160,7 +157,7 @@ export default function TeamSettingsPage() {
                     <Badge variant={user.active ? "default" : "secondary"} className="cursor-pointer" onClick={() => user.role !== "owner" && updateUser(user.id, { active: !user.active })}>
                       {user.active ? "Activo" : "Inactivo"}
                     </Badge>
-                    {user.role !== "owner" && user.clerk_id !== clerkUser?.id && (
+                    {user.role !== "owner" && (
                       <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteUser(user.id)} disabled={updating === user.id}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
