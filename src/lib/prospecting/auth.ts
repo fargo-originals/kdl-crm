@@ -1,18 +1,18 @@
-import { auth } from "@clerk/nextjs/server";
-import { supabaseServer } from "@/lib/supabase-server";
+import { getSession } from '@/lib/auth/session';
+import { supabaseServer } from '@/lib/supabase-server';
 
 export async function getCurrentDbUserId() {
-  const { userId } = await auth();
-  if (!userId) return { clerkUserId: null, dbUserId: null, error: "Unauthorized" };
+  const session = await getSession();
+  if (!session) return { dbUserId: null, error: 'Unauthorized' };
 
   const { data, error } = await supabaseServer
-    .from("users")
-    .select("id")
-    .eq("clerk_id", userId)
+    .from('users')
+    .select('id')
+    .eq('id', session.sub)
     .maybeSingle();
 
-  if (error) return { clerkUserId: userId, dbUserId: null, error: error.message };
-  if (!data?.id) return { clerkUserId: userId, dbUserId: null, error: "User not found" };
+  if (error) return { dbUserId: null, error: error.message };
+  if (!data?.id) return { dbUserId: null, error: 'User not found' };
 
-  return { clerkUserId: userId, dbUserId: data.id as string, error: null };
+  return { dbUserId: data.id as string, error: null };
 }

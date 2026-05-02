@@ -1,8 +1,7 @@
-import { pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb, serial } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, boolean, integer, numeric, jsonb } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  clerkId: text('clerk_id').unique(),
   email: text('email').notNull().unique(),
   firstName: text('first_name'),
   lastName: text('last_name'),
@@ -10,6 +9,11 @@ export const users = pgTable('users', {
   avatarUrl: text('avatar_url'),
   phone: text('phone'),
   active: boolean('active').default(true),
+  passwordHash: text('password_hash'),
+  googleId: text('google_id').unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  lastLoginAt: timestamp('last_login_at'),
+  notificationPreferences: jsonb('notification_preferences'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -192,3 +196,6 @@ export const prospectResults = pgTable('prospect_results', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
+
+export * from './landing';
+export * from './agents';

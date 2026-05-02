@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 
 const OAUTH_CONFIGS: Record<string, { url: string; scope: string }> = {
@@ -25,8 +25,8 @@ const OAUTH_CONFIGS: Record<string, { url: string; scope: string }> = {
 };
 
 export async function GET(_req: Request, { params }: { params: Promise<{ type: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  const session = await getSession();
+  if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { type } = await params;
   const config = OAUTH_CONFIGS[type];
@@ -48,7 +48,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
       scope: config.scope,
       access_type: "offline",
       prompt: "consent",
-      state: userId,
+      state: session.sub,
     });
     redirect(`${config.url}?${params.toString()}`);
   }
@@ -64,7 +64,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
       redirect_uri: `${appUrl}/api/integrations/${type}/callback`,
       response_type: "code",
       scope: config.scope,
-      state: userId,
+      state: session.sub,
     });
     redirect(`${config.url}?${params.toString()}`);
   }
@@ -79,7 +79,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
       client_id: clientId!,
       redirect_uri: `${appUrl}/api/integrations/slack/callback`,
       scope: config.scope,
-      state: userId,
+      state: session.sub,
     });
     redirect(`${config.url}?${params.toString()}`);
   }

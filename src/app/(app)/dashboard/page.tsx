@@ -1,8 +1,7 @@
-import { UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSupabaseServer } from "@/lib/supabase-server";
+import { getSession } from "@/lib/auth/session";
 import { Users, Building2, DollarSign, Ticket, TrendingUp, Clock } from "lucide-react";
 
 async function getStats() {
@@ -67,7 +66,7 @@ function formatCurrency(value: number) {
 }
 
 export default async function DashboardPage() {
-  const user = await currentUser();
+  const session = await getSession();
   const stats = await getStats();
   const activities = await getRecentActivities();
   const pipeline = await getPipelineData();
@@ -84,9 +83,8 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Resumen de tu actividad</p>
+          <p className="text-muted-foreground">Bienvenido, {session?.email}</p>
         </div>
-        <UserButton />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

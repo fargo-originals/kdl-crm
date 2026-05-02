@@ -1,16 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, File, X } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface ParsedContact {
   first_name: string;
@@ -22,7 +15,6 @@ interface ParsedContact {
 }
 
 export default function ImportDataPage() {
-  const { user } = useUser();
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedContact[]>([]);
   const [loading, setLoading] = useState(false);
@@ -115,7 +107,6 @@ export default function ImportDataPage() {
           <h1 className="text-3xl font-bold">Importar Datos</h1>
           <p className="text-muted-foreground">Importa contactos desde CSV/Excel</p>
         </div>
-        <UserButton />
       </div>
 
       <Card>

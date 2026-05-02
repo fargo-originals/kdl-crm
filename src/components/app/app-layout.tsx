@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Building2, DollarSign, Ticket, CheckSquare, Settings, Radar } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, Building2, DollarSign, Ticket, CheckSquare, Settings, Radar, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
 
@@ -20,6 +20,12 @@ const navigation = [
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  }
 
   return (
     <QueryProvider>
@@ -52,6 +58,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          <div className="border-t p-4">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Cerrar sesión
+            </button>
+          </div>
         </div>
         <div className="flex flex-1 flex-col overflow-hidden">
           <main className="flex-1 overflow-auto bg-background p-8">{children}</main>
