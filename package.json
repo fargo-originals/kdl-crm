@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:owner": "tsx src/db/seed/create-owner.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.74",

@@ -1,5 +1,22 @@
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
+
+// Load .env.local if present
+try {
+  const envPath = resolve(process.cwd(), '.env.local');
+  const lines = readFileSync(envPath, 'utf8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+    if (!process.env[key]) process.env[key] = val;
+  }
+} catch { /* .env.local not found, use existing env */ }
 
 async function main() {
   const supabase = createClient(
