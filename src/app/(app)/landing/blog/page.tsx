@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/app/image-upload';
 
 interface BlogPost {
   id: string;
@@ -206,10 +207,11 @@ export default function BlogPage() {
                 </select>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label>Imagen de portada URL</Label>
-              <Input value={form.cover_url} onChange={e => setForm(f => ({ ...f, cover_url: e.target.value }))} placeholder="https://..." />
-            </div>
+            <ImageUpload
+              label="Imagen de portada"
+              value={form.cover_url}
+              onChange={url => setForm(f => ({ ...f, cover_url: url }))}
+            />
             <div className="space-y-1">
               <Label>Etiquetas (separadas por coma)</Label>
               <Input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="nextjs, diseño, web" />
