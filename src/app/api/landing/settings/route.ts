@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest) {
 
   const { data, error } = await supabaseServer
     .from('landing_settings')
-    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+    .upsert({ key, value, published_value: value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
     .select()
     .single();
 
