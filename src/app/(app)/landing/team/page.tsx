@@ -121,6 +121,7 @@ export default function TeamPage() {
         <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nuevo miembro</Button>
       </div>
 
+      <p className="rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-700 border border-blue-200">Activa el icono <strong>ojo</strong> en cada elemento para que aparezca en la landing page.</p>
       {items.length === 0 && <p className="text-muted-foreground">No hay miembros del equipo aún.</p>}
 
       <div className="space-y-2">
