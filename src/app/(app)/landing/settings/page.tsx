@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/app/image-upload';
 
 interface HeaderSettings {
   logo_url: string;
@@ -144,10 +145,11 @@ export default function SettingsPage() {
             <Label>Nombre del sitio</Label>
             <Input value={header.site_name} onChange={e => setHeader(h => ({ ...h, site_name: e.target.value }))} placeholder="KentoDevLab" />
           </div>
-          <div className="space-y-1">
-            <Label>URL del logo</Label>
-            <Input value={header.logo_url} onChange={e => setHeader(h => ({ ...h, logo_url: e.target.value }))} placeholder="https://..." />
-          </div>
+          <ImageUpload
+            label="Logo"
+            value={header.logo_url}
+            onChange={url => setHeader(h => ({ ...h, logo_url: url }))}
+          />
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-1">
@@ -250,10 +252,11 @@ export default function SettingsPage() {
             <Label>Keywords (separadas por coma)</Label>
             <Input value={seo.keywords} onChange={e => setSeo(s => ({ ...s, keywords: e.target.value }))} placeholder="desarrollo web, nextjs, react" />
           </div>
-          <div className="space-y-1">
-            <Label>Imagen OG (URL)</Label>
-            <Input value={seo.og_image} onChange={e => setSeo(s => ({ ...s, og_image: e.target.value }))} placeholder="https://..." />
-          </div>
+          <ImageUpload
+            label="Imagen OG"
+            value={seo.og_image}
+            onChange={url => setSeo(s => ({ ...s, og_image: url }))}
+          />
         </div>
       </section>
 

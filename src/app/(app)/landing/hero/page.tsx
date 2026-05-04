@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/app/image-upload';
 
 interface HeroItem {
   id: string;
@@ -176,10 +177,11 @@ export default function HeroPage() {
               <Label>URL del botón CTA</Label>
               <Input value={form.cta_url} onChange={e => setForm(f => ({ ...f, cta_url: e.target.value }))} placeholder="/contacto" />
             </div>
-            <div className="space-y-1">
-              <Label>URL de imagen/vídeo de fondo</Label>
-              <Input value={form.bg_media_url} onChange={e => setForm(f => ({ ...f, bg_media_url: e.target.value }))} placeholder="https://..." />
-            </div>
+            <ImageUpload
+              label="Imagen/vídeo de fondo"
+              value={form.bg_media_url}
+              onChange={url => setForm(f => ({ ...f, bg_media_url: url }))}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>

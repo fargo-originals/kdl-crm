@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/app/image-upload';
 
 interface TeamMember {
   id: string;
@@ -164,10 +165,11 @@ export default function TeamPage() {
                 <Label>Nombre completo <span className="text-destructive">*</span></Label>
                 <Input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder="Ana García" />
               </div>
-              <div className="space-y-1">
-                <Label>Avatar URL</Label>
-                <Input value={form.avatar_url} onChange={e => setForm(f => ({ ...f, avatar_url: e.target.value }))} placeholder="https://..." />
-              </div>
+              <ImageUpload
+                label="Avatar"
+                value={form.avatar_url}
+                onChange={url => setForm(f => ({ ...f, avatar_url: url }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">

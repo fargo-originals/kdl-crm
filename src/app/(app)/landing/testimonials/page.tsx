@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/app/image-upload';
 
 interface Testimonial {
   id: string;
@@ -155,10 +156,11 @@ export default function TestimonialsPage() {
                 <Label>Nombre del autor</Label>
                 <Input value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))} placeholder="María García" />
               </div>
-              <div className="space-y-1">
-                <Label>Avatar URL</Label>
-                <Input value={form.author_avatar_url} onChange={e => setForm(f => ({ ...f, author_avatar_url: e.target.value }))} placeholder="https://..." />
-              </div>
+              <ImageUpload
+                label="Avatar"
+                value={form.author_avatar_url}
+                onChange={url => setForm(f => ({ ...f, author_avatar_url: url }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
