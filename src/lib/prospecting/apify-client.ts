@@ -8,13 +8,13 @@ export type ApifyRecord = {
   [key: string]: unknown;
 };
 
-// Google Maps Scraper output record
+// compass/crawler-google-places output record
+// Note: email is NOT returned by this actor — comes from WCC enrichment
 export type GoogleMapsRecord = {
   title?: string;
   totalScore?: number;
   reviewsCount?: number;
   phone?: string;
-  phoneUnformatted?: string;
   website?: string;
   categoryName?: string;
   address?: string;
@@ -23,7 +23,6 @@ export type GoogleMapsRecord = {
   city?: string;
   placeId?: string;
   url?: string;
-  email?: string;
   permanentlyClosed?: boolean;
   [key: string]: unknown;
 };
@@ -55,7 +54,7 @@ export async function launchGoogleMapsScraper(
 ): Promise<{ runId: string }> {
   const token = getApifyToken();
 
-  const response = await fetch("https://api.apify.com/v2/acts/apify~google-maps-scraper/runs", {
+  const response = await fetch("https://api.apify.com/v2/acts/compass~crawler-google-places/runs", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

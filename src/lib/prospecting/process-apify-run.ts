@@ -84,12 +84,11 @@ export async function processGoogleMapsRun(runId: string) {
       address: r.address ?? null,
       neighborhood: r.neighborhood ?? null,
       district: r.district ?? null,
-      phone: r.phone ?? r.phoneUnformatted ?? null,
+      phone: r.phone ?? null,
       website: r.website ?? null,
       google_rating: r.totalScore ?? null,
       google_review_count: r.reviewsCount ?? null,
       category: r.categoryName ?? null,
-      email: r.email ?? null,
       enrichment_status: r.website ? "pending" : "done",
     }));
 
