@@ -8,14 +8,14 @@ export async function POST(req: Request) {
   if (authError === "Unauthorized") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!dbUserId) return NextResponse.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json()) as { resultIds?: string[] };
+  const body = (await req.json()) as { resultIds?: string[]; autoContact?: boolean };
   if (!Array.isArray(body.resultIds) || body.resultIds.length === 0) {
     return NextResponse.json({ error: "resultIds is required" }, { status: 400 });
   }
 
   const { data: results, error } = await supabaseServer
     .from("prospect_results")
-    .select("*, prospect_searches!inner(user_id, sector)")
+    .select("*, prospect_searches!inner(user_id, sector, zone)")
     .in("id", body.resultIds)
     .eq("prospect_searches.user_id", dbUserId)
     .eq("review_status", "approved")
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   const imported: Array<{ resultId: string; contactId: string | null; companyId: string | null }> = [];
 
   for (const result of results as ProspectResultForImport[]) {
-    const created = await importProspectToCRM(result, dbUserId);
+    const created = await importProspectToCRM(result, dbUserId, body.autoContact ?? false);
     await supabaseServer
       .from("prospect_results")
       .update({
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       })
       .eq("id", result.id);
 
-    imported.push({ resultId: result.id, ...created });
+    imported.push({ resultId: result.id, contactId: created.contactId, companyId: created.companyId, leadId: created.leadId });
   }
 
   const searchIds = [...new Set((results as Array<{ search_id: string }>).map((result) => result.search_id))];

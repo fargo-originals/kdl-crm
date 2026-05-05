@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { enqueueAgentRun } from "@/lib/agents";
 
 export type ProspectResultForImport = {
   id: string;
@@ -9,6 +10,9 @@ export type ProspectResultForImport = {
   email: string | null;
   contact_name: string | null;
   contact_title: string | null;
+  category?: string | null;
+  google_rating?: number | string | null;
+  google_review_count?: number | null;
   prospect_searches?: { sector?: string | null } | null;
 };
 
@@ -27,13 +31,26 @@ function domainFromWebsite(website: string | null) {
   }
 }
 
+function detectChannel(result: ProspectResultForImport): 'email' | 'whatsapp' | 'phone' {
+  if (result.email) return 'email';
+  if (result.phone) {
+    const digits = result.phone.replace(/\D/g, '');
+    const local = digits.startsWith('34') ? digits.slice(2) : digits;
+    if (local.startsWith('6') || local.startsWith('7')) return 'whatsapp';
+  }
+  return 'phone';
+}
+
 export async function importProspectToCRM(
   result: ProspectResultForImport,
-  userId: string
-): Promise<{ contactId: string | null; companyId: string | null }> {
+  userId: string,
+  autoContact = false
+): Promise<{ contactId: string | null; companyId: string | null; leadId: string | null }> {
   let companyId: string | null = null;
   let contactId: string | null = null;
+  let leadId: string | null = null;
 
+  // --- Company ---
   const phoneMatch = result.phone
     ? await supabaseServer
         .from("companies")
@@ -61,7 +78,7 @@ export async function importProspectToCRM(
       .insert({
         name: result.name,
         domain: domainFromWebsite(result.website),
-        industry: result.prospect_searches?.sector ?? null,
+        industry: result.prospect_searches?.sector ?? result.category ?? null,
         address: result.address,
         city: "Madrid",
         country: "España",
@@ -76,6 +93,7 @@ export async function importProspectToCRM(
     companyId = company.id;
   }
 
+  // --- Contact ---
   if (result.contact_name) {
     const { firstName, lastName } = splitName(result.contact_name);
     const { data: existingContact } = result.email
@@ -106,5 +124,46 @@ export async function importProspectToCRM(
     }
   }
 
-  return { contactId, companyId };
+  // --- Lead inquiry ---
+  if (result.email || result.phone) {
+    const channel = detectChannel(result);
+    const hasWebsite = Boolean(result.website);
+    const fullName = result.contact_name ?? result.name;
+
+    const { data: lead, error: leadError } = await supabaseServer
+      .from("lead_inquiries")
+      .insert({
+        full_name: fullName,
+        email: result.email ?? null,
+        phone: result.phone ?? null,
+        business_name: result.name,
+        business_type: result.category ?? result.prospect_searches?.sector ?? null,
+        service_interest: hasWebsite ? 'redesign' : 'new_website',
+        message: hasWebsite
+          ? `Negocio con web: ${result.website}`
+          : 'Negocio sin web — importado desde prospección',
+        preferred_channel: channel,
+        status: 'new',
+        locale: 'es',
+        qualification_data: {
+          source: 'apify_prospecting',
+          has_website: hasWebsite,
+          website_url: result.website ?? null,
+          address: result.address ?? null,
+          rating: result.google_rating ?? null,
+          reviews_count: result.google_review_count ?? null,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (!leadError && lead) {
+      leadId = lead.id;
+      if (autoContact && (channel === 'email' || channel === 'whatsapp')) {
+        enqueueAgentRun(lead.id).catch(() => {});
+      }
+    }
+  }
+
+  return { contactId, companyId, leadId };
 }
