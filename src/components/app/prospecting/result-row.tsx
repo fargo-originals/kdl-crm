@@ -1,9 +1,10 @@
 "use client";
 
-import { AtSign, Check, ExternalLink, Mail, Phone, X } from "lucide-react";
+import { AtSign, Check, ExternalLink, Globe, Mail, Phone, Share2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EnrichmentBadge } from "@/components/app/prospecting/enrichment-badge";
+import { classifyWebsite } from "@/lib/prospecting/classify-website";
 import type { ProspectResult } from "@/components/app/prospecting/types";
 
 type ResultRowProps = {
@@ -17,6 +18,7 @@ export function ResultRow({ result, selected, onSelect, onReview }: ResultRowPro
   const imported = Boolean(result.imported_at);
   const approved = result.review_status === "approved";
   const discarded = result.review_status === "discarded";
+  const web = classifyWebsite(result.website);
 
   return (
     <tr className="border-b align-top last:border-0">
@@ -41,8 +43,8 @@ export function ResultRow({ result, selected, onSelect, onReview }: ResultRowPro
           <p className="max-w-md text-sm text-muted-foreground">{result.address ?? "Sin direccion"}</p>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             {result.category && <span>{result.category}</span>}
-            {result.google_rating && <span>{result.google_rating} Google</span>}
-            {typeof result.google_review_count === "number" && <span>{result.google_review_count} resenas</span>}
+            {result.google_rating && <span>{result.google_rating} ★</span>}
+            {typeof result.google_review_count === "number" && <span>{result.google_review_count} reseñas</span>}
           </div>
         </div>
       </td>
@@ -50,13 +52,13 @@ export function ResultRow({ result, selected, onSelect, onReview }: ResultRowPro
         <div className="space-y-2 text-sm">
           {result.phone && (
             <a className="flex items-center gap-2 hover:text-primary" href={`tel:${result.phone}`}>
-              <Phone className="h-4 w-4" />
+              <Phone className="h-4 w-4 shrink-0" />
               {result.phone}
             </a>
           )}
           {result.email && (
             <a className="flex items-center gap-2 hover:text-primary" href={`mailto:${result.email}`}>
-              <Mail className="h-4 w-4" />
+              <Mail className="h-4 w-4 shrink-0" />
               {result.email}
             </a>
           )}
@@ -67,23 +69,39 @@ export function ResultRow({ result, selected, onSelect, onReview }: ResultRowPro
               target="_blank"
               rel="noreferrer"
             >
-              <AtSign className="h-4 w-4" />
+              <AtSign className="h-4 w-4 shrink-0" />
               @{result.instagram}
-            </a>
-          )}
-          {result.website && (
-            <a
-              className="flex items-center gap-2 hover:text-primary"
-              href={result.website}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Web
             </a>
           )}
         </div>
       </td>
+
+      {/* Web presence column */}
+      <td className="py-4 pr-4">
+        {web.presence === 'real_website' && (
+          <a href={web.url!} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
+            <Globe className="h-3.5 w-3.5" />
+            Web propia
+            <ExternalLink className="h-3 w-3 opacity-60" />
+          </a>
+        )}
+        {web.presence === 'social_only' && (
+          <a href={web.url!} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-700 hover:bg-yellow-200 transition-colors">
+            <Share2 className="h-3.5 w-3.5" />
+            {web.label}
+            <ExternalLink className="h-3 w-3 opacity-60" />
+          </a>
+        )}
+        {web.presence === 'none' && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+            <Globe className="h-3.5 w-3.5" />
+            Sin web
+          </span>
+        )}
+      </td>
+
       <td className="py-4 pr-4">
         <div className="space-y-2">
           <EnrichmentBadge status={result.enrichment_status} />

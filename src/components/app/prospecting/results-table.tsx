@@ -2,11 +2,12 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, RefreshCw, X } from "lucide-react";
+import { Check, Globe, Loader2, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportButton } from "@/components/app/prospecting/import-button";
 import { ResultRow } from "@/components/app/prospecting/result-row";
+import { classifyWebsite } from "@/lib/prospecting/classify-website";
 import type { SearchResultsPayload } from "@/components/app/prospecting/types";
 
 async function fetchSearchResults(searchId: string): Promise<SearchResultsPayload> {
@@ -28,6 +29,7 @@ async function syncSearch(searchId: string): Promise<void> {
 
 export function ResultsTable({ initialData }: { initialData: SearchResultsPayload }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [hideWithRealWeb, setHideWithRealWeb] = useState(false);
   const queryClient = useQueryClient();
   const syncedRef = useRef(false);
   const enrichingStartRef = useRef<number>(Date.now());
@@ -75,6 +77,7 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
   });
 
   const data = query.data;
+
   const approvedIds = useMemo(
     () =>
       data.results
@@ -82,8 +85,23 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
         .map((result) => result.id),
     [data.results]
   );
+
+  const visibleResults = useMemo(() =>
+    hideWithRealWeb
+      ? data.results.filter(r => classifyWebsite(r.website).presence !== 'real_website')
+      : data.results,
+    [data.results, hideWithRealWeb]
+  );
+
+  const realWebIds = useMemo(
+    () => data.results
+      .filter(r => classifyWebsite(r.website).presence === 'real_website' && !r.imported_at)
+      .map(r => r.id),
+    [data.results]
+  );
+
   const importIds = selectedIds.filter((id) => approvedIds.includes(id));
-  const allSelectableIds = data.results
+  const allSelectableIds = visibleResults
     .filter((result) => result.review_status !== "discarded" && !result.imported_at)
     .map((result) => result.id);
 
@@ -98,6 +116,12 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
       reviewMutation.mutate({ resultId, status });
     }
     setSelectedIds([]);
+  }
+
+  function discardAllWithRealWeb() {
+    for (const resultId of realWebIds) {
+      reviewMutation.mutate({ resultId, status: "discarded" });
+    }
   }
 
   return (
@@ -117,26 +141,32 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
             {query.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
           <div className="flex flex-wrap gap-2">
-            {(data.search.status === "enriching") && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={syncMutation.isPending}
-                onClick={() => syncMutation.mutate()}
-              >
-                {syncMutation.isPending
-                  ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  : <RefreshCw className="mr-2 h-4 w-4" />}
+            {data.search.status === "enriching" && (
+              <Button size="sm" variant="outline" disabled={syncMutation.isPending} onClick={() => syncMutation.mutate()}>
+                {syncMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 Sincronizar con Apify
               </Button>
             )}
+            {realWebIds.length > 0 && (
+              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={discardAllWithRealWeb} disabled={reviewMutation.isPending}>
+                <Globe className="mr-2 h-4 w-4" />
+                Descartar con web propia ({realWebIds.length})
+              </Button>
+            )}
+            <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none border rounded-md px-3 py-1.5 hover:bg-accent">
+              <input
+                type="checkbox"
+                checked={hideWithRealWeb}
+                onChange={e => setHideWithRealWeb(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border"
+              />
+              Solo sin web propia
+            </label>
             <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => bulkReview("approved")}>
-              <Check className="mr-2 h-4 w-4" />
-              Aprobar
+              <Check className="mr-2 h-4 w-4" /> Aprobar
             </Button>
             <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => bulkReview("discarded")}>
-              <X className="mr-2 h-4 w-4" />
-              Descartar
+              <X className="mr-2 h-4 w-4" /> Descartar
             </Button>
             <ImportButton searchId={data.search.id} resultIds={importIds.length > 0 ? importIds : approvedIds} />
           </div>
@@ -152,12 +182,13 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
                   <th className="w-10 px-0 py-3" />
                   <th className="py-3 pr-4">Negocio</th>
                   <th className="py-3 pr-4">Contacto</th>
+                  <th className="py-3 pr-4">Web</th>
                   <th className="py-3 pr-4">Enriquecimiento</th>
                   <th className="py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {data.results.map((result) => (
+                {visibleResults.map((result) => (
                   <ResultRow
                     key={result.id}
                     result={result}
