@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { markApifyRunFailed, processApifyRun } from "@/lib/prospecting/process-apify-run";
+import { markApifyRunFailed, processApifyRun, processGoogleMapsRun } from "@/lib/prospecting/process-apify-run";
+import { supabaseServer } from "@/lib/supabase-server";
 
 type ApifyWebhookPayload = {
   eventType?: string;
@@ -24,6 +25,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ data });
   }
 
+  // Detect whether this is a Google Maps Scraper run or a WCC enrichment run
+  const { data: gmsSearch } = await supabaseServer
+    .from("prospect_searches")
+    .select("id")
+    .eq("apify_run_id", runId)
+    .maybeSingle();
+
+  if (gmsSearch) {
+    const data = await processGoogleMapsRun(runId);
+    return NextResponse.json({ data });
+  }
+
+  // WCC enrichment run
   const data = await processApifyRun(runId);
   return NextResponse.json({ data });
 }
