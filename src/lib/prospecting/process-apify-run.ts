@@ -86,6 +86,7 @@ export async function processGoogleMapsRun(runId: string) {
       district: r.district ?? null,
       phone: r.phone ?? null,
       website: r.website ?? null,
+      logo_url: r.imageUrl ?? (Array.isArray(r.imageUrls) ? r.imageUrls[0] : null) ?? null,
       google_rating: r.totalScore ?? null,
       google_review_count: r.reviewsCount ?? null,
       category: r.categoryName ?? null,

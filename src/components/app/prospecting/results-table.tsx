@@ -6,7 +6,7 @@ import { Check, Globe, Loader2, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportButton } from "@/components/app/prospecting/import-button";
-import { ResultRow } from "@/components/app/prospecting/result-row";
+import { ResultCard } from "@/components/app/prospecting/result-card";
 import { classifyWebsite } from "@/lib/prospecting/classify-website";
 import type { SearchResultsPayload } from "@/components/app/prospecting/types";
 
@@ -175,30 +175,18 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
         {data.results.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No hay resultados para esta busqueda.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left">
-              <thead className="border-b bg-muted/50 text-xs uppercase text-muted-foreground">
-                <tr>
-                  <th className="w-10 px-0 py-3" />
-                  <th className="py-3 pr-4">Negocio</th>
-                  <th className="py-3 pr-4">Contacto</th>
-                  <th className="py-3 pr-4">Web</th>
-                  <th className="py-3 pr-4">Enriquecimiento</th>
-                  <th className="py-3 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleResults.map((result) => (
-                  <ResultRow
-                    key={result.id}
-                    result={result}
-                    selected={selectedIds.includes(result.id)}
-                    onSelect={(selected) => setSelected(result.id, selected)}
-                    onReview={(status) => reviewMutation.mutate({ resultId: result.id, status })}
-                  />
-                ))}
-              </tbody>
-            </table>
+          <div className="p-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {visibleResults.map((result) => (
+                <ResultCard
+                  key={result.id}
+                  result={result}
+                  selected={selectedIds.includes(result.id)}
+                  onSelect={(selected) => setSelected(result.id, selected)}
+                  onReview={(status) => reviewMutation.mutate({ resultId: result.id, status })}
+                />
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

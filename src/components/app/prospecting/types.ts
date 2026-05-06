@@ -27,6 +27,7 @@ export type ProspectResult = {
   google_rating: number | string | null;
   google_review_count: number | null;
   category: string | null;
+  logo_url: string | null;
   email: string | null;
   instagram: string | null;
   contact_name: string | null;

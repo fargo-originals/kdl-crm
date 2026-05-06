@@ -23,6 +23,8 @@ export type GoogleMapsRecord = {
   city?: string;
   placeId?: string;
   url?: string;
+  imageUrl?: string;
+  imageUrls?: string[];
   permanentlyClosed?: boolean;
   [key: string]: unknown;
 };
