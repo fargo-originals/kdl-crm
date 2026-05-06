@@ -1,6 +1,7 @@
 "use client";
 
-import { AtSign, Check, ExternalLink, Globe, Mail, Phone, Share2, X } from "lucide-react";
+import { Check, ExternalLink, Globe, Mail, Phone, Share2, X } from "lucide-react";
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EnrichmentBadge } from "@/components/app/prospecting/enrichment-badge";
@@ -95,9 +96,9 @@ export function ResultCard({ result, selected, onSelect, onReview }: ResultCardP
             <a
               href={`https://instagram.com/${result.instagram.replace(/^@/, "")}`}
               target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 text-[11px] hover:text-primary truncate"
+              className="flex items-center gap-1.5 text-[11px] text-pink-600 hover:text-pink-700 truncate"
             >
-              <AtSign className="h-3 w-3 shrink-0" />@{result.instagram.replace(/^@/, "")}
+              <FaInstagram className="h-3 w-3 shrink-0" />@{result.instagram.replace(/^@/, "")}
             </a>
           )}
         </div>

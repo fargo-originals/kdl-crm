@@ -11,8 +11,9 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Globe, MapPin, Phone, Loader2, Pencil, X, Check,
-  Mail, ExternalLink, AtSign, Share2, Briefcase, MessageCircle,
+  Mail, ExternalLink, MessageCircle,
 } from "lucide-react";
+import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 
 interface Company {
   id: string;
@@ -180,7 +181,7 @@ export default function CompanyDetailPage() {
               {wa && (
                 <a href={wa} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-green-600 hover:text-green-700">
-                  <MessageCircle className="h-3.5 w-3.5" />WhatsApp
+                  <FaWhatsapp className="h-3.5 w-3.5" />WhatsApp
                 </a>
               )}
               {websiteUrl && (
@@ -193,19 +194,19 @@ export default function CompanyDetailPage() {
               {instagramUrl && (
                 <a href={instagramUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-pink-600 hover:text-pink-700">
-                  <AtSign className="h-3.5 w-3.5" />Instagram
+                  <FaInstagram className="h-3.5 w-3.5" />Instagram
                 </a>
               )}
               {facebookUrl && (
                 <a href={facebookUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700">
-                  <Share2 className="h-3.5 w-3.5" />Facebook
+                  <FaFacebook className="h-3.5 w-3.5" />Facebook
                 </a>
               )}
               {linkedinUrl && (
                 <a href={linkedinUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700">
-                  <Briefcase className="h-3.5 w-3.5" />LinkedIn
+                  <FaLinkedin className="h-3.5 w-3.5" />LinkedIn
                 </a>
               )}
             </div>
@@ -269,7 +270,7 @@ export default function CompanyDetailPage() {
                     {wa && (
                       <a href={wa} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700 hover:bg-green-200">
-                        <MessageCircle className="h-3.5 w-3.5" />WhatsApp
+                        <FaWhatsapp className="h-3.5 w-3.5" />WhatsApp
                       </a>
                     )}
                   </div>
@@ -299,7 +300,7 @@ export default function CompanyDetailPage() {
                   {instagramUrl ? (
                     <a href={instagramUrl} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-2 py-2 text-sm text-pink-600 hover:text-pink-700">
-                      <AtSign className="h-4 w-4" />
+                      <FaInstagram className="h-4 w-4" />
                       {company.instagram?.startsWith("http") ? company.instagram : `@${company.instagram?.replace(/^@/, "")}`}
                       <ExternalLink className="h-3 w-3 opacity-60" />
                     </a>
@@ -310,7 +311,7 @@ export default function CompanyDetailPage() {
                   {facebookUrl ? (
                     <a href={facebookUrl} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-2 py-2 text-sm text-blue-600 hover:text-blue-700">
-                      <Share2 className="h-4 w-4" />{company.facebook}
+                      <FaFacebook className="h-4 w-4" />{company.facebook}
                       <ExternalLink className="h-3 w-3 opacity-60" />
                     </a>
                   ) : <p className="text-sm py-2 text-muted-foreground">—</p>}
@@ -320,7 +321,7 @@ export default function CompanyDetailPage() {
                   {linkedinUrl ? (
                     <a href={linkedinUrl} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-2 py-2 text-sm text-sky-600 hover:text-sky-700">
-                      <Briefcase className="h-4 w-4" />{company.linkedin}
+                      <FaLinkedin className="h-4 w-4" />{company.linkedin}
                       <ExternalLink className="h-3 w-3 opacity-60" />
                     </a>
                   ) : <p className="text-sm py-2 text-muted-foreground">—</p>}
