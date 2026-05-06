@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Users, Building2, DollarSign, Ticket, CheckSquare, Settings, Radar } from "lucide-react";
+import { Users, Building2, DollarSign, Ticket, CheckSquare, Settings, Radar, Upload } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Users },
+  { name: "Leads", href: "/leads", icon: Users },
   { name: "Contactos", href: "/contacts", icon: Users },
   { name: "Empresas", href: "/companies", icon: Building2 },
   { name: "Pipeline", href: "/deals", icon: DollarSign },
   { name: "Prospeccion", href: "/prospecting", icon: Radar },
+  { name: "Importar Apify", href: "/prospecting/import", icon: Upload },
   { name: "Tickets", href: "/tickets", icon: Ticket },
   { name: "Tareas", href: "/tasks", icon: CheckSquare },
   { name: "Configuración", href: "/settings", icon: Settings },

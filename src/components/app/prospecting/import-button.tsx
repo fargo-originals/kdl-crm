@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2 } from "lucide-react";
+import { Bot, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ImportButton({
@@ -13,13 +14,15 @@ export function ImportButton({
   resultIds: string[];
   disabled?: boolean;
 }) {
+  const [autoContact, setAutoContact] = useState(false);
   const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: async () => {
       const response = await fetch("/api/prospecting/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resultIds }),
+        body: JSON.stringify({ resultIds, autoContact }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error ?? "No se pudo importar");
@@ -30,14 +33,31 @@ export function ImportButton({
     },
   });
 
+  const isDisabled = disabled || resultIds.length === 0 || mutation.isPending;
+
   return (
-    <Button
-      onClick={() => mutation.mutate()}
-      disabled={disabled || resultIds.length === 0 || mutation.isPending}
-      variant="secondary"
-    >
-      {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-      Importar aprobados
-    </Button>
+    <div className="flex items-center gap-2">
+      <label className="flex items-center gap-1.5 cursor-pointer select-none text-sm text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={autoContact}
+          onChange={e => setAutoContact(e.target.checked)}
+          className="h-3.5 w-3.5 rounded border"
+          disabled={isDisabled}
+        />
+        <Bot className="h-3.5 w-3.5" />
+        Contactar con IA
+      </label>
+      <Button
+        onClick={() => mutation.mutate()}
+        disabled={isDisabled}
+        variant="secondary"
+      >
+        {mutation.isPending
+          ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          : <Download className="mr-2 h-4 w-4" />}
+        Importar aprobados
+      </Button>
+    </div>
   );
 }

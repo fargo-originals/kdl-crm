@@ -1,6 +1,14 @@
 import { supabaseServer } from "@/lib/supabase-server";
-import { getRunDataset, type ApifyRecord } from "@/lib/prospecting/apify-client";
+import {
+  getRunDataset,
+  getGoogleMapsDataset,
+  launchEnrichmentRun,
+  type ApifyRecord,
+  type GoogleMapsRecord,
+} from "@/lib/prospecting/apify-client";
 import { parseEnrichedData } from "@/lib/prospecting/enrichment-parser";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getRecordContent(record: ApifyRecord) {
   return [record.markdown, record.text, record.html, record.pageTitle].filter(Boolean).join("\n");
@@ -18,14 +26,15 @@ function normalizeHost(url: string | null | undefined) {
 function findRecordForWebsite(records: ApifyRecord[], website: string | null) {
   const targetHost = normalizeHost(website);
   if (!targetHost) return null;
-
   return (
-    records.find((record) => {
-      const recordHost = normalizeHost(record.loadedUrl ?? record.url);
-      return recordHost === targetHost || recordHost?.endsWith(`.${targetHost}`);
+    records.find((r) => {
+      const host = normalizeHost(r.loadedUrl ?? r.url);
+      return host === targetHost || host?.endsWith(`.${targetHost}`);
     }) ?? null
   );
 }
+
+// ── Mark failed ───────────────────────────────────────────────────────────────
 
 export async function markApifyRunFailed(runId: string) {
   const { data: search, error } = await supabaseServer
@@ -37,7 +46,11 @@ export async function markApifyRunFailed(runId: string) {
   if (error) throw new Error(error.message);
   if (!search) throw new Error("Search not found");
 
-  await supabaseServer.from("prospect_results").update({ enrichment_status: "failed" }).eq("search_id", search.id);
+  await supabaseServer
+    .from("prospect_results")
+    .update({ enrichment_status: "failed" })
+    .eq("search_id", search.id);
+
   await supabaseServer
     .from("prospect_searches")
     .update({ status: "failed", updated_at: new Date().toISOString() })
@@ -46,7 +59,11 @@ export async function markApifyRunFailed(runId: string) {
   return { searchId: search.id, status: "failed" };
 }
 
-export async function processApifyRun(runId: string) {
+// ── Process Google Maps Scraper run ───────────────────────────────────────────
+// Creates prospect_results from GMS structured output, then optionally launches
+// Website Content Crawler to enrich emails from business websites.
+
+export async function processGoogleMapsRun(runId: string) {
   const { data: search, error: searchError } = await supabaseServer
     .from("prospect_searches")
     .select("id")
@@ -54,6 +71,90 @@ export async function processApifyRun(runId: string) {
     .maybeSingle();
 
   if (searchError) throw new Error(searchError.message);
+  if (!search) throw new Error("Search not found");
+
+  const records = await getGoogleMapsDataset(runId);
+
+  const rows = records
+    .filter((r): r is GoogleMapsRecord & { title: string } => Boolean(r.title) && !r.permanentlyClosed)
+    .map((r) => ({
+      search_id: search.id,
+      google_place_id: r.placeId ?? `gms_${Math.random().toString(36).slice(2)}`,
+      name: r.title,
+      address: r.address ?? null,
+      neighborhood: r.neighborhood ?? null,
+      district: r.district ?? null,
+      phone: r.phone ?? null,
+      website: r.website ?? null,
+      google_rating: r.totalScore ?? null,
+      google_review_count: r.reviewsCount ?? null,
+      category: r.categoryName ?? null,
+      enrichment_status: r.website ? "pending" : "done",
+    }));
+
+  if (rows.length > 0) {
+    await supabaseServer.from("prospect_results").insert(rows);
+  }
+
+  // Launch WCC enrichment for businesses with websites
+  const websites = [...new Set(rows.map((r) => r.website).filter((w): w is string => Boolean(w)))];
+  let enrichRunId: string | null = null;
+
+  if (websites.length > 0) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const webhookSecret = process.env.APIFY_WEBHOOK_SECRET;
+    if (appUrl && webhookSecret) {
+      try {
+        const { runId: enrichId } = await launchEnrichmentRun(
+          websites,
+          `${appUrl.replace(/\/$/, "")}/api/prospecting/webhook`,
+          webhookSecret
+        );
+        enrichRunId = enrichId;
+        // Store enrichment run id so the second webhook knows which search to update
+        await supabaseServer
+          .from("prospect_searches")
+          .update({ apify_enrich_run_id: enrichRunId, status: "enriching", total_results: rows.length, updated_at: new Date().toISOString() })
+          .eq("id", search.id);
+      } catch {
+        // Enrichment is optional — if it fails, results are still usable
+      }
+    }
+  }
+
+  if (!enrichRunId) {
+    await supabaseServer
+      .from("prospect_searches")
+      .update({ status: "done", total_results: rows.length, updated_at: new Date().toISOString() })
+      .eq("id", search.id);
+  }
+
+  return { searchId: search.id, totalResults: rows.length, enrichRunId };
+}
+
+// ── Process Website Content Crawler run (enrichment) ─────────────────────────
+
+export async function processApifyRun(runId: string) {
+  // Support both apify_run_id (GMS) and apify_enrich_run_id (WCC)
+  let search: { id: string } | null = null;
+
+  const { data: byEnrich } = await supabaseServer
+    .from("prospect_searches")
+    .select("id")
+    .eq("apify_enrich_run_id", runId)
+    .maybeSingle();
+  search = byEnrich;
+
+  if (!search) {
+    const { data: byRun, error } = await supabaseServer
+      .from("prospect_searches")
+      .select("id")
+      .eq("apify_run_id", runId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    search = byRun;
+  }
+
   if (!search) throw new Error("Search not found");
 
   const records = await getRunDataset(runId);
@@ -64,7 +165,6 @@ export async function processApifyRun(runId: string) {
 
   if (resultsError) throw new Error(resultsError.message);
 
-  // Resultados sin web nunca entran en Apify — marcarlos como done directamente
   const noWebsiteIds = (results ?? []).filter((r) => !r.website).map((r) => r.id);
   if (noWebsiteIds.length > 0) {
     await supabaseServer
@@ -87,8 +187,7 @@ export async function processApifyRun(runId: string) {
     }
 
     const parsed = parseEnrichedData(getRecordContent(record), record.loadedUrl ?? record.url ?? result.website);
-    const hasEnrichment = Boolean(parsed.email || parsed.instagram || parsed.contactName);
-    if (hasEnrichment) enrichedCount += 1;
+    if (parsed.email || parsed.instagram || parsed.contactName) enrichedCount += 1;
 
     await supabaseServer
       .from("prospect_results")
