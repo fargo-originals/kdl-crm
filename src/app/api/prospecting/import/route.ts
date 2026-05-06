@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No approved results to import" }, { status: 400 });
   }
 
-  const imported: Array<{ resultId: string; contactId: string | null; companyId: string | null }> = [];
+  const imported: Array<{ resultId: string; contactId: string | null; companyId: string | null; leadId: string | null }> = [];
 
   for (const result of results as ProspectResultForImport[]) {
     const created = await importProspectToCRM(result, dbUserId, body.autoContact ?? false);
