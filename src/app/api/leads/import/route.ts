@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const leadData = {
       full_name: row.business_name,
-      email: row.email || null,
+      email: row.email || '',
       phone: row.phone || null,
       business_name: row.business_name,
       business_type: row.business_type || null,
