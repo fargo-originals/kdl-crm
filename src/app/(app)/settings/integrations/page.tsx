@@ -5,7 +5,26 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, ExternalLink, Loader2, Mail, Calendar, MessageSquare, Video, AlertCircle, XCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+  Mail,
+  Calendar,
+  MessageSquare,
+  Video,
+  AlertCircle,
+  XCircle,
+  Settings2,
+} from "lucide-react";
 
 interface Integration {
   id: string;
@@ -67,13 +86,62 @@ const INTEGRATIONS = [
   },
 ];
 
+const PROVIDER_LABELS: Record<string, string> = {
+  google: "Google",
+  microsoft: "Microsoft",
+  slack: "Slack",
+};
+
+const PROVIDER_INSTRUCTIONS: Record<string, {
+  steps: string[];
+  docsUrl: string;
+  redirectUris: (appUrl: string) => string[];
+}> = {
+  google: {
+    docsUrl: "https://console.cloud.google.com/apis/credentials",
+    steps: [
+      "Ve a Google Cloud Console → APIs & Services → Credentials.",
+      "Crea un OAuth 2.0 Client ID (tipo: Web application).",
+      "Añade las URIs de redirección autorizadas que aparecen abajo.",
+      "Copia el Client ID y Client Secret aquí.",
+    ],
+    redirectUris: (appUrl) => [
+      `${appUrl}/api/integrations/google_gmail/callback`,
+      `${appUrl}/api/integrations/google_calendar/callback`,
+    ],
+  },
+  microsoft: {
+    docsUrl: "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps",
+    steps: [
+      "Ve a Azure Portal → App registrations → New registration.",
+      "En Authentication añade las URIs de redirección que aparecen abajo.",
+      "En Certificates & secrets crea un nuevo client secret.",
+      "Copia el Application (client) ID y el secret aquí.",
+    ],
+    redirectUris: (appUrl) => [
+      `${appUrl}/api/integrations/microsoft_outlook/callback`,
+      `${appUrl}/api/integrations/microsoft_teams/callback`,
+    ],
+  },
+  slack: {
+    docsUrl: "https://api.slack.com/apps",
+    steps: [
+      "Ve a api.slack.com/apps → Create New App → From scratch.",
+      "En OAuth & Permissions añade la URI de redirección que aparece abajo.",
+      "Activa los scopes: channels:read, chat:write, incoming-webhook.",
+      "Instala la app en tu workspace y copia el Client ID y Client Secret aquí.",
+    ],
+    redirectUris: (appUrl) => [`${appUrl}/api/integrations/slack/callback`],
+  },
+};
+
 const ERROR_MESSAGES: Record<string, string> = {
   oauth_failed: "El proceso de autenticación fue cancelado o falló.",
   token_failed: "No se pudo obtener el token de acceso. Inténtalo de nuevo.",
   callback_error: "Error durante el proceso de conexión.",
-  missing_google_config: "Google OAuth no está configurado en el servidor.",
-  missing_microsoft_config: "Microsoft OAuth no está configurado en el servidor.",
-  missing_slack_config: "Slack OAuth no está configurado en el servidor.",
+  missing_google_config: "Google OAuth no está configurado.",
+  missing_microsoft_config: "Microsoft OAuth no está configurado.",
+  missing_slack_config: "Slack OAuth no está configurado.",
 };
 
 export default function IntegrationsPage() {
@@ -83,8 +151,15 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
 
+  const [setupProvider, setSetupProvider] = useState<string | null>(null);
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
+
   const errorKey = searchParams.get("error");
   const success = searchParams.get("success");
+  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
 
   useEffect(() => {
     Promise.all([
@@ -102,7 +177,7 @@ export default function IntegrationsPage() {
   }
 
   function isConfigured(provider: string) {
-    if (!config) return true; // optimistic while loading
+    if (!config) return false;
     return config[provider as keyof Config] ?? false;
   }
 
@@ -118,7 +193,35 @@ export default function IntegrationsPage() {
     window.location.href = `/api/integrations/${type}/auth`;
   }
 
+  function openSetup(provider: string) {
+    setSetupProvider(provider);
+    setClientId("");
+    setClientSecret("");
+    setSetupError(null);
+  }
+
+  async function saveCredentials() {
+    if (!setupProvider || !clientId.trim() || !clientSecret.trim()) return;
+    setSaving(true);
+    setSetupError(null);
+    const res = await fetch("/api/integrations/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: setupProvider, clientId, clientSecret }),
+    });
+    if (!res.ok) {
+      const body = await res.json();
+      setSetupError(body.error ?? "Error al guardar");
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    setSetupProvider(null);
+    fetch("/api/integrations/config").then(r => r.json()).then(setConfig);
+  }
+
   const categories = [...new Set(INTEGRATIONS.map(i => i.category))];
+  const instructions = setupProvider ? PROVIDER_INSTRUCTIONS[setupProvider] : null;
 
   return (
     <div className="space-y-6">
@@ -142,7 +245,9 @@ export default function IntegrationsPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
       ) : (
         categories.map(category => (
           <div key={category}>
@@ -179,20 +284,50 @@ export default function IntegrationsPage() {
                       {!configured && (
                         <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
                           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                          Credenciales OAuth no configuradas en el servidor.
+                          Credenciales OAuth no configuradas.
                         </div>
                       )}
 
                       <div className="flex gap-2">
                         {active ? (
-                          <Button variant="outline" size="sm" onClick={() => disconnect(integration.id)} disabled={connecting === integration.id}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => disconnect(integration.id)}
+                            disabled={connecting === integration.id}
+                          >
                             {connecting === integration.id && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
                             Desconectar
                           </Button>
-                        ) : (
-                          <Button size="sm" onClick={() => connect(integration.id)} disabled={connecting === integration.id || !configured}>
+                        ) : configured ? (
+                          <Button
+                            size="sm"
+                            onClick={() => connect(integration.id)}
+                            disabled={connecting === integration.id}
+                          >
                             {connecting === integration.id && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
                             Conectar
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openSetup(integration.provider)}
+                            className="gap-1.5"
+                          >
+                            <Settings2 className="h-3.5 w-3.5" />
+                            Configurar
+                          </Button>
+                        )}
+                        {configured && !active && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground gap-1"
+                            onClick={() => openSetup(integration.provider)}
+                          >
+                            <Settings2 className="h-3 w-3" />
+                            Credenciales
                           </Button>
                         )}
                         <Button variant="ghost" size="sm" className="text-muted-foreground gap-1">
@@ -211,9 +346,94 @@ export default function IntegrationsPage() {
 
       <Card className="border-dashed">
         <CardContent className="py-6 text-center text-muted-foreground">
-          <p className="text-sm">¿Necesitas una integración que no está aquí? <a href="mailto:support@kdl.com" className="text-primary underline">Contáctanos</a></p>
+          <p className="text-sm">
+            ¿Necesitas una integración que no está aquí?{" "}
+            <a href="mailto:support@kdl.com" className="text-primary underline">Contáctanos</a>
+          </p>
         </CardContent>
       </Card>
+
+      <Dialog open={!!setupProvider} onOpenChange={(open) => !open && setSetupProvider(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Configurar {setupProvider ? PROVIDER_LABELS[setupProvider] : ""} OAuth
+            </DialogTitle>
+            <DialogDescription>
+              Crea una aplicación OAuth en {setupProvider ? PROVIDER_LABELS[setupProvider] : ""} y pega las credenciales aquí.
+            </DialogDescription>
+          </DialogHeader>
+
+          {instructions && (
+            <div className="space-y-4">
+              <div className="rounded-md bg-muted px-4 py-3 text-sm space-y-1.5">
+                <p className="font-medium text-foreground mb-2">Pasos:</p>
+                {instructions.steps.map((step, i) => (
+                  <p key={i} className="text-muted-foreground">
+                    <span className="font-medium text-foreground">{i + 1}.</span> {step}
+                  </p>
+                ))}
+                <a
+                  href={instructions.docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-primary underline mt-1"
+                >
+                  Abrir consola <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+
+              {appUrl && (
+                <div className="rounded-md bg-muted px-4 py-3 text-sm space-y-1">
+                  <p className="font-medium text-foreground mb-1">URIs de redirección autorizadas:</p>
+                  {instructions.redirectUris(appUrl).map((uri) => (
+                    <p key={uri} className="font-mono text-xs text-muted-foreground break-all">{uri}</p>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Client ID</label>
+                  <Input
+                    placeholder="Pega el Client ID aquí"
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Client Secret</label>
+                  <Input
+                    type="password"
+                    placeholder="Pega el Client Secret aquí"
+                    value={clientSecret}
+                    onChange={(e) => setClientSecret(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+
+              {setupError && (
+                <p className="text-sm text-destructive">{setupError}</p>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={saveCredentials}
+                  disabled={saving || !clientId.trim() || !clientSecret.trim()}
+                >
+                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Guardar credenciales
+                </Button>
+                <Button variant="outline" onClick={() => setSetupProvider(null)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
