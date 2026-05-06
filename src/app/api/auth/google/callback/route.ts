@@ -38,11 +38,7 @@ export async function GET(req: NextRequest) {
   const profile = await profileRes.json();
   if (!profile.email) return NextResponse.redirect('/login?error=oauth_profile');
 
-<<<<<<< claude/integrate-landing-page-dNHEC
   // Check if user already exists to preserve their existing role
-=======
-    // Check if user already exists to preserve their existing role
->>>>>>> main
   const { data: existingUser } = await supabaseServer
     .from('users')
     .select('id, role')
@@ -73,6 +69,7 @@ export async function GET(req: NextRequest) {
     .upsert(upsertPayload, { onConflict: 'email' })
     .select('id, email, role')
     .single();
+
   if (!user) return NextResponse.redirect('/login?error=db');
 
   const token = await signToken({ sub: user.id, role: user.role, email: user.email });
