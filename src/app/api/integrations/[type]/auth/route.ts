@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { getProviderConfig } from "@/app/api/integrations/config/route";
 import { redirect } from "next/navigation";
 
 const OAUTH_CONFIGS: Record<string, { url: string; scope: string }> = {
@@ -29,59 +30,49 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
   if (!session) return new Response("Unauthorized", { status: 401 });
 
   const { type } = await params;
-  const config = OAUTH_CONFIGS[type];
-
-  if (!config) return new Response("Integration not found", { status: 404 });
+  const oauthConfig = OAUTH_CONFIGS[type];
+  if (!oauthConfig) return new Response("Integration not found", { status: 404 });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  // For Google-based integrations
   if (type.startsWith("google_")) {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      redirect(`/settings/integrations?error=missing_google_config`);
-    }
-    const params = new URLSearchParams({
-      client_id: clientId!,
+    const creds = await getProviderConfig("google");
+    if (!creds) redirect("/settings/integrations?error=missing_google_config");
+    const qs = new URLSearchParams({
+      client_id: creds!.clientId,
       redirect_uri: `${appUrl}/api/integrations/${type}/callback`,
       response_type: "code",
-      scope: config.scope,
+      scope: oauthConfig.scope,
       access_type: "offline",
       prompt: "consent",
       state: session.sub,
     });
-    redirect(`${config.url}?${params.toString()}`);
+    redirect(`${oauthConfig.url}?${qs.toString()}`);
   }
 
-  // For Microsoft
   if (type.startsWith("microsoft_")) {
-    const clientId = process.env.MICROSOFT_CLIENT_ID;
-    if (!clientId) {
-      redirect(`/settings/integrations?error=missing_microsoft_config`);
-    }
-    const params = new URLSearchParams({
-      client_id: clientId!,
+    const creds = await getProviderConfig("microsoft");
+    if (!creds) redirect("/settings/integrations?error=missing_microsoft_config");
+    const qs = new URLSearchParams({
+      client_id: creds!.clientId,
       redirect_uri: `${appUrl}/api/integrations/${type}/callback`,
       response_type: "code",
-      scope: config.scope,
+      scope: oauthConfig.scope,
       state: session.sub,
     });
-    redirect(`${config.url}?${params.toString()}`);
+    redirect(`${oauthConfig.url}?${qs.toString()}`);
   }
 
-  // For Slack
   if (type === "slack") {
-    const clientId = process.env.SLACK_CLIENT_ID;
-    if (!clientId) {
-      redirect(`/settings/integrations?error=missing_slack_config`);
-    }
-    const params = new URLSearchParams({
-      client_id: clientId!,
+    const creds = await getProviderConfig("slack");
+    if (!creds) redirect("/settings/integrations?error=missing_slack_config");
+    const qs = new URLSearchParams({
+      client_id: creds!.clientId,
       redirect_uri: `${appUrl}/api/integrations/slack/callback`,
-      scope: config.scope,
+      scope: oauthConfig.scope,
       state: session.sub,
     });
-    redirect(`${config.url}?${params.toString()}`);
+    redirect(`${oauthConfig.url}?${qs.toString()}`);
   }
 
   return new Response("Not implemented", { status: 501 });
