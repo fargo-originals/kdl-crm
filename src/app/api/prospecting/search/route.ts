@@ -22,6 +22,7 @@ export async function POST(req: Request) {
   if (!appUrl || !webhookSecret) {
     return NextResponse.json({ error: "Missing NEXT_PUBLIC_APP_URL or APIFY_WEBHOOK_SECRET" }, { status: 500 });
   }
+  console.log(`[prospecting/search] webhook url: ${appUrl.replace(/\/$/, "")}/api/prospecting/webhook`);
 
   const keywords = `${sector.keywords[0]} en ${body.zone} Madrid`;
 

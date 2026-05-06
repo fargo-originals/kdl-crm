@@ -18,7 +18,10 @@ export async function POST(req: Request) {
     .eq("user_id", dbUserId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[prospecting/sync] DB error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   if (!search) return NextResponse.json({ error: "Search not found" }, { status: 404 });
   if (!search.apify_run_id) return NextResponse.json({ error: "Search has no Apify run" }, { status: 400 });
 
@@ -31,6 +34,13 @@ export async function POST(req: Request) {
     ? processGoogleMapsRun
     : processApifyRun;
 
-  const data = await processor(runId);
-  return NextResponse.json({ data });
+  console.log(`[prospecting/sync] status=${search.status} runId=${runId} processor=${processor.name}`);
+  try {
+    const data = await processor(runId);
+    return NextResponse.json({ data });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[prospecting/sync] processor error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

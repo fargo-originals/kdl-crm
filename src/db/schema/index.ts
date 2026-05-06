@@ -168,6 +168,7 @@ export const prospectSearches = pgTable('prospect_searches', {
   enrichedCount: integer('enriched_count').default(0),
   importedCount: integer('imported_count').default(0),
   apifyRunId: text('apify_run_id'),
+  apifyEnrichRunId: text('apify_enrich_run_id'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
