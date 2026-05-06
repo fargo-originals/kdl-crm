@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -125,74 +124,95 @@ export default function CompaniesPage() {
           <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Crear primera empresa</Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((company) => (
-            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/companies/${company.id}`)}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg leading-tight">{company.name}</CardTitle>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  {company.industry && <Badge variant="secondary" className="text-xs">{company.industry}</Badge>}
-                  {company.size && <span className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" />{company.size}</span>}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {filtered.map((company) => {
+            const wa = waHref(company.phone);
+            const ig = instagramUrl(company.instagram);
+            const fb = ensureHttps(company.facebook);
+            const li = ensureHttps(company.linkedin);
+            const web = ensureHttps(company.website);
+            return (
+              <div
+                key={company.id}
+                className="relative flex flex-col rounded-lg border bg-card text-sm transition-colors hover:shadow-md cursor-pointer"
+                onClick={() => router.push(`/companies/${company.id}`)}
+              >
+                {/* Thumbnail / initial */}
+                <div className="h-20 w-full overflow-hidden rounded-t-lg bg-muted flex items-center justify-center shrink-0">
+                  <span className="text-2xl font-bold text-muted-foreground/30 select-none">
+                    {company.name.charAt(0).toUpperCase()}
+                  </span>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-2 pt-0">
-                {(company.city || company.country) && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />{[company.city, company.country].filter(Boolean).join(", ")}
-                  </p>
-                )}
-                {company.phone && (
-                  <a
-                    href={`tel:${company.phone}`}
-                    className="flex items-center gap-1.5 text-sm hover:text-primary"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <Phone className="h-3 w-3" />{company.phone}
-                  </a>
-                )}
-                {ensureHttps(company.website) && (
-                  <a
-                    href={ensureHttps(company.website)!}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm hover:text-primary"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <Globe className="h-3 w-3" />{company.domain ?? company.website}
-                    <ExternalLink className="h-2.5 w-2.5 opacity-60" />
-                  </a>
-                )}
-                {/* Social links row */}
-                {(company.phone || company.instagram || company.facebook || company.linkedin) && (
-                  <div className="flex items-center gap-2 pt-1">
-                    {waHref(company.phone) && (
-                      <a href={waHref(company.phone)!} target="_blank" rel="noopener noreferrer"
-                        className="text-green-600 hover:text-green-700" title="WhatsApp" onClick={e => e.stopPropagation()}>
-                        <FaWhatsapp className="h-4 w-4" />
+
+                {/* Body */}
+                <div className="flex flex-1 flex-col gap-1.5 p-2.5 pt-2">
+                  <p className="font-semibold leading-snug line-clamp-2" title={company.name}>{company.name}</p>
+
+                  <div className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+                    {company.industry && <span className="truncate max-w-full">{company.industry}</span>}
+                    {company.size && <span className="shrink-0 flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{company.size}</span>}
+                  </div>
+
+                  {(company.city || company.country) && (
+                    <p className="text-[11px] text-muted-foreground line-clamp-1 flex items-center gap-1">
+                      <MapPin className="h-2.5 w-2.5 shrink-0" />{[company.city, company.country].filter(Boolean).join(", ")}
+                    </p>
+                  )}
+
+                  <div className="space-y-1">
+                    {company.phone && (
+                      <a href={`tel:${company.phone}`} className="flex items-center gap-1.5 text-[11px] hover:text-primary truncate"
+                        onClick={e => e.stopPropagation()}>
+                        <Phone className="h-3 w-3 shrink-0" />{company.phone}
                       </a>
                     )}
-                    {instagramUrl(company.instagram) && (
-                      <a href={instagramUrl(company.instagram)!} target="_blank" rel="noopener noreferrer"
-                        className="text-pink-600 hover:text-pink-700" title="Instagram" onClick={e => e.stopPropagation()}>
-                        <FaInstagram className="h-4 w-4" />
-                      </a>
-                    )}
-                    {ensureHttps(company.facebook) && (
-                      <a href={ensureHttps(company.facebook)!} target="_blank" rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700" title="Facebook" onClick={e => e.stopPropagation()}>
-                        <FaFacebook className="h-4 w-4" />
-                      </a>
-                    )}
-                    {ensureHttps(company.linkedin) && (
-                      <a href={ensureHttps(company.linkedin)!} target="_blank" rel="noopener noreferrer"
-                        className="text-sky-600 hover:text-sky-700" title="LinkedIn" onClick={e => e.stopPropagation()}>
-                        <FaLinkedin className="h-4 w-4" />
+                    {web && (
+                      <a href={web} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-[11px] hover:text-primary truncate"
+                        onClick={e => e.stopPropagation()}>
+                        <Globe className="h-3 w-3 shrink-0" />{company.domain ?? company.website}
+                        <ExternalLink className="h-2 w-2 opacity-60 shrink-0" />
                       </a>
                     )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* Social icons row */}
+                  {(wa || ig || fb || li) && (
+                    <div className="flex items-center gap-2 mt-auto pt-1">
+                      {wa && (
+                        <a href={wa} target="_blank" rel="noopener noreferrer"
+                          className="text-green-600 hover:text-green-700" title="WhatsApp"
+                          onClick={e => e.stopPropagation()}>
+                          <FaWhatsapp className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      {ig && (
+                        <a href={ig} target="_blank" rel="noopener noreferrer"
+                          className="text-pink-600 hover:text-pink-700" title="Instagram"
+                          onClick={e => e.stopPropagation()}>
+                          <FaInstagram className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      {fb && (
+                        <a href={fb} target="_blank" rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-700" title="Facebook"
+                          onClick={e => e.stopPropagation()}>
+                          <FaFacebook className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      {li && (
+                        <a href={li} target="_blank" rel="noopener noreferrer"
+                          className="text-sky-600 hover:text-sky-700" title="LinkedIn"
+                          onClick={e => e.stopPropagation()}>
+                          <FaLinkedin className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
