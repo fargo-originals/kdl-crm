@@ -48,10 +48,9 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
     refetchInterval: (currentQuery) => {
       const data = currentQuery.state.data as SearchResultsPayload | undefined;
       if (!data) return false;
-      if (data.search.status === "done" || data.search.status === "failed") return false;
-      const isEnriching = data.results.some((r) => r.enrichment_status === "enriching");
-      if (!isEnriching) return false;
-      // Fallback: si lleva más de 3 min enriqueciendo y el webhook no llegó, sync automático
+      const status = data.search.status;
+      if (status === "done" || status === "failed") return false;
+      // Poll while searching OR enriching — webhook may not arrive
       if (!syncedRef.current && Date.now() - enrichingStartRef.current > AUTO_SYNC_AFTER_MS) {
         syncedRef.current = true;
         syncMutation.mutate();
@@ -124,72 +123,96 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
     }
   }
 
+  const isInProgress = data.search.status !== "done" && data.search.status !== "failed";
+
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-input"
-                checked={allSelectableIds.length > 0 && selectedIds.length === allSelectableIds.length}
-                onChange={(event) => setSelectedIds(event.target.checked ? allSelectableIds : [])}
-              />
-              {selectedIds.length} seleccionados
-            </label>
-            {query.isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {data.search.status === "enriching" && (
-              <Button size="sm" variant="outline" disabled={syncMutation.isPending} onClick={() => syncMutation.mutate()}>
-                {syncMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Sincronizar con Apify
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedIds.length > 0 && (
+            <>
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => bulkReview("approved")}>
+                <Check className="h-3 w-3" /> Aprobar ({selectedIds.length})
               </Button>
-            )}
-            {realWebIds.length > 0 && (
-              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={discardAllWithRealWeb} disabled={reviewMutation.isPending}>
-                <Globe className="mr-2 h-4 w-4" />
-                Descartar con web propia ({realWebIds.length})
+              <Button size="sm" variant="outline" className="gap-1 text-destructive" onClick={() => bulkReview("discarded")}>
+                <X className="h-3 w-3" /> Descartar ({selectedIds.length})
               </Button>
-            )}
-            <label className="flex items-center gap-1.5 text-sm text-muted-foreground cursor-pointer select-none border rounded-md px-3 py-1.5 hover:bg-accent">
-              <input
-                type="checkbox"
-                checked={hideWithRealWeb}
-                onChange={e => setHideWithRealWeb(e.target.checked)}
-                className="h-3.5 w-3.5 rounded border"
-              />
-              Solo sin web propia
-            </label>
-            <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => bulkReview("approved")}>
-              <Check className="mr-2 h-4 w-4" /> Aprobar
+              <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => setSelectedIds([])}>
+                Deseleccionar
+              </Button>
+            </>
+          )}
+          {selectedIds.length === 0 && allSelectableIds.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(allSelectableIds)}>
+              Seleccionar todos ({allSelectableIds.length})
             </Button>
-            <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => bulkReview("discarded")}>
-              <X className="mr-2 h-4 w-4" /> Descartar
+          )}
+          {realWebIds.length > 0 && (
+            <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={discardAllWithRealWeb}>
+              <Globe className="h-3 w-3" /> Descartar con web real ({realWebIds.length})
             </Button>
-            <ImportButton searchId={data.search.id} resultIds={importIds.length > 0 ? importIds : approvedIds} />
-          </div>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1 text-muted-foreground"
+            onClick={() => setHideWithRealWeb(v => !v)}
+          >
+            <Globe className="h-3 w-3" /> {hideWithRealWeb ? 'Mostrar todos' : 'Ocultar con web real'}
+          </Button>
         </div>
 
-        {data.results.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">No hay resultados para esta busqueda.</div>
-        ) : (
-          <div className="p-3">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {visibleResults.map((result) => (
-                <ResultCard
-                  key={result.id}
-                  result={result}
-                  selected={selectedIds.includes(result.id)}
-                  onSelect={(selected) => setSelected(result.id, selected)}
-                  onReview={(status) => reviewMutation.mutate({ resultId: result.id, status })}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <div className="flex items-center gap-2">
+          {isInProgress && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {data.search.status === "searching" ? "Buscando en Google Maps..." : "Enriqueciendo datos..."}
+            </span>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+          >
+            <RefreshCw className={`h-3 w-3 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            Sincronizar
+          </Button>
+          {importIds.length > 0 && (
+            <ImportButton resultIds={importIds} searchId={initialData.search.id} />
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      {data.results.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            {isInProgress ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p>Buscando negocios... Los resultados aparecerán aquí cuando Apify finalice.</p>
+              </div>
+            ) : (
+              <p>No se encontraron resultados para esta búsqueda.</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {visibleResults.map((result) => (
+            <ResultCard
+              key={result.id}
+              result={result}
+              selected={selectedIds.includes(result.id)}
+              onSelect={(selected) => setSelected(result.id, selected)}
+              onReview={(status) => reviewMutation.mutate({ resultId: result.id, status })}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
