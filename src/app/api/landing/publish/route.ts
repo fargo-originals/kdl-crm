@@ -5,7 +5,7 @@ import { revalidateLanding } from '@/lib/landing/revalidate';
 
 export async function POST() {
   const session = await getSession();
-  if (!session || session.role !== 'owner') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // Sync published_value from value in landing_settings
   const { data: settings } = await supabaseServer.from('landing_settings').select('id, value');
