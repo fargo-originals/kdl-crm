@@ -38,30 +38,37 @@ export async function GET(req: NextRequest) {
   const profile = await profileRes.json();
   if (!profile.email) return NextResponse.redirect('/login?error=oauth_profile');
 
-  // Upsert user
-  const { count } = await supabaseServer
+    // Check if user already exists to preserve their existing role
+  const { data: existingUser } = await supabaseServer
     .from('users')
-    .select('*', { count: 'exact', head: true });
+    .select('id, role')
+    .eq('email', profile.email.toLowerCase())
+    .maybeSingle();
 
-  const role = (count ?? 0) === 0 ? 'owner' : 'seller';
+  // Only assign role for new users; never downgrade an existing user's role
+  const roleForNewUser = existingUser ? undefined : (
+    await supabaseServer.from('users').select('*', { count: 'exact', head: true })
+      .then(({ count }) => (count ?? 0) === 0 ? 'owner' : 'seller')
+  );
+
+  const upsertPayload: Record<string, unknown> = {
+    email: profile.email.toLowerCase(),
+    google_id: profile.id,
+    first_name: profile.given_name ?? '',
+    last_name: profile.family_name ?? '',
+    avatar_url: profile.picture ?? '',
+    email_verified: true,
+    active: true,
+    last_login_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  if (roleForNewUser) upsertPayload.role = roleForNewUser;
 
   const { data: user } = await supabaseServer
     .from('users')
-    .upsert({
-      email: profile.email.toLowerCase(),
-      google_id: profile.id,
-      first_name: profile.given_name ?? '',
-      last_name: profile.family_name ?? '',
-      avatar_url: profile.picture ?? '',
-      email_verified: true,
-      role,
-      active: true,
-      last_login_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'email' })
+    .upsert(upsertPayload, { onConflict: 'email' })
     .select('id, email, role')
     .single();
-
   if (!user) return NextResponse.redirect('/login?error=db');
 
   const token = await signToken({ sub: user.id, role: user.role, email: user.email });
