@@ -27,3 +27,9 @@ export async function requireOwner(): Promise<JWTPayload> {
   if (session.role !== 'owner') redirect('/dashboard');
   return session;
 }
+
+export async function requireAdmin(): Promise<JWTPayload> {
+  const session = await requireSession();
+  if (session.role !== 'owner' && session.role !== 'admin') redirect('/dashboard');
+  return session;
+}
