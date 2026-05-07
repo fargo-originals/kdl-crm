@@ -74,6 +74,7 @@ export async function processGoogleMapsRun(runId: string) {
   if (!search) throw new Error("Search not found");
 
   const records = await getGoogleMapsDataset(runId);
+  console.log(`[processGoogleMapsRun] runId=${runId} apify_records=${records.length}`);
 
   const rows = records
     .filter((r): r is GoogleMapsRecord & { title: string } => Boolean(r.title) && !r.permanentlyClosed)

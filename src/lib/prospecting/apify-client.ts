@@ -143,7 +143,9 @@ async function getRunDatasetId(runId: string) {
   }
 
   const data = (await response.json()) as RunDetailResponse;
-  return data.data?.defaultDatasetId ?? null;
+  const datasetId = data.data?.defaultDatasetId ?? null;
+  console.log(`[apify] getRunDatasetId runId=${runId} datasetId=${datasetId}`);
+  return datasetId;
 }
 
 export async function getGoogleMapsDataset(runId: string): Promise<GoogleMapsRecord[]> {
