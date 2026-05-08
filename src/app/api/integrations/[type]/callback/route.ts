@@ -1,3 +1,4 @@
+import { getSession } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase-server";
 import { getProviderConfig } from "@/app/api/integrations/config/route";
 import { redirect } from "next/navigation";
@@ -12,6 +13,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
 
   if (error || !code || !state) {
     redirect("/settings/integrations?error=oauth_failed");
+  }
+
+  const session = await getSession();
+  if (!session || session.sub !== state) {
+    redirect("/settings/integrations?error=oauth_state_mismatch");
   }
 
   try {
@@ -75,7 +81,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
 
     await supabaseServer.from("integrations").upsert(
       {
-        user_id: state,
+        user_id: session.sub,
         type,
         access_token: tokenData!.access_token,
         refresh_token: tokenData!.refresh_token || null,

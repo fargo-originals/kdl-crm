@@ -1,10 +1,11 @@
-import { getSession } from "@/lib/auth/session";
+import { requireAdmin } from "@/lib/auth/session";
+import { canAssignRole, isValidRole } from "@/lib/auth/roles";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin({ redirectTo: null });
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { data, error } = await supabaseServer
     .from("users")
@@ -17,13 +18,17 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin({ redirectTo: null });
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
   const { email, first_name, last_name, role = "seller" } = body;
 
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+  if (!isValidRole(role)) return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
+  if (!canAssignRole(session.role, role)) {
+    return NextResponse.json({ error: "Sin permisos para asignar ese rol" }, { status: 403 });
+  }
 
   const { data, error } = await supabaseServer
     .from("users")

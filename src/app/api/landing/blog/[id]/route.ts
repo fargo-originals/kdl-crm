@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { getSession, requireAdmin } from '@/lib/auth/session';
 import { supabaseServer } from '@/lib/supabase-server';
 
 const TABLE = 'landing_blog_posts';
@@ -15,8 +15,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await requireAdmin({ redirectTo: null });
+  if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const { id } = await params;
   const body = await req.json();
   const updates: Record<string, unknown> = { ...body, updated_at: new Date().toISOString() };
@@ -29,8 +29,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await requireAdmin({ redirectTo: null });
+  if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const { id } = await params;
   const { error } = await supabaseServer.from(TABLE).delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

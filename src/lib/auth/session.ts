@@ -16,20 +16,42 @@ export async function getSessionFromRequest(req: NextRequest): Promise<JWTPayloa
   return verifyToken(token);
 }
 
-export async function requireSession(): Promise<JWTPayload> {
+type RequireOptions = {
+  /** Set to null in route handlers to return null instead of issuing a UI redirect. */
+  redirectTo?: string | null;
+};
+
+export async function requireSession(options: { redirectTo: null }): Promise<JWTPayload | null>;
+export async function requireSession(options?: RequireOptions): Promise<JWTPayload>;
+export async function requireSession(options: RequireOptions = {}): Promise<JWTPayload | null> {
   const session = await getSession();
-  if (!session) redirect('/login');
+  if (!session) {
+    if (options.redirectTo === null) return null;
+    redirect(options.redirectTo ?? '/login');
+  }
   return session;
 }
 
-export async function requireOwner(): Promise<JWTPayload> {
-  const session = await requireSession();
-  if (session.role !== 'owner') redirect('/dashboard');
+export async function requireOwner(options: { redirectTo: null }): Promise<JWTPayload | null>;
+export async function requireOwner(options?: RequireOptions): Promise<JWTPayload>;
+export async function requireOwner(options: RequireOptions = {}): Promise<JWTPayload | null> {
+  const session = await requireSession(options as { redirectTo: null });
+  if (!session) return null;
+  if (session.role !== 'owner') {
+    if (options.redirectTo === null) return null;
+    redirect(options.redirectTo ?? '/dashboard');
+  }
   return session;
 }
 
-export async function requireAdmin(): Promise<JWTPayload> {
-  const session = await requireSession();
-  if (session.role !== 'owner' && session.role !== 'admin') redirect('/dashboard');
+export async function requireAdmin(options: { redirectTo: null }): Promise<JWTPayload | null>;
+export async function requireAdmin(options?: RequireOptions): Promise<JWTPayload>;
+export async function requireAdmin(options: RequireOptions = {}): Promise<JWTPayload | null> {
+  const session = await requireSession(options as { redirectTo: null });
+  if (!session) return null;
+  if (session.role !== 'owner' && session.role !== 'admin') {
+    if (options.redirectTo === null) return null;
+    redirect(options.redirectTo ?? '/dashboard');
+  }
   return session;
 }

@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth/session";
+import { getSession, requireAdmin } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
@@ -42,8 +42,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin({ redirectTo: null });
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { provider, clientId, clientSecret } = await req.json() as {
     provider: string;
@@ -74,8 +74,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin({ redirectTo: null });
+  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const provider = searchParams.get("provider");
