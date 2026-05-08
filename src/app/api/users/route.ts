@@ -4,8 +4,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  await requireAdmin();
 
   const { data, error } = await supabaseServer
     .from("users")
@@ -18,8 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireAdmin();
 
   const body = await req.json();
   const { email, first_name, last_name, role = "seller" } = body;

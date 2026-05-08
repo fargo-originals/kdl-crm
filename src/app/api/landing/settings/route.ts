@@ -12,8 +12,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  await requireAdmin();
 
   const body = await req.json() as { key: string; value: unknown };
   const { key, value } = body;

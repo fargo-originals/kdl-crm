@@ -4,8 +4,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { revalidateLanding } from '@/lib/landing/revalidate';
 
 export async function POST() {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  await requireAdmin();
 
   // Sync published_value from value in landing_settings
   const { data: settings } = await supabaseServer.from('landing_settings').select('id, value');

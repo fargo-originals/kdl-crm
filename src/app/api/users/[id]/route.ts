@@ -4,8 +4,7 @@ import { canAssignRole, canManage, isValidRole } from "@/lib/auth/roles";
 import { NextResponse } from "next/server";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireAdmin();
 
   const { id } = await params;
 
@@ -56,8 +55,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const session = await requireAdmin();
 
   const { id } = await params;
 

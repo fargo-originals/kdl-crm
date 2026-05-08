@@ -7,10 +7,7 @@ const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
 
 export async function POST(req: NextRequest) {
-  const session = await requireAdmin({ redirectTo: null });
-  if (!session) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  await requireAdmin();
 
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
