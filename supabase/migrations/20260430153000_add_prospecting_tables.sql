@@ -78,8 +78,9 @@ BEGIN
     CREATE POLICY "Prospect searches can do anything"
       ON prospect_searches
       FOR ALL
-      USING (true)
-      WITH CHECK (true);
+      TO authenticated
+      USING (user_id = auth.uid())
+      WITH CHECK (user_id = auth.uid());
   END IF;
 
   IF NOT EXISTS (
@@ -92,7 +93,20 @@ BEGIN
     CREATE POLICY "Prospect results can do anything"
       ON prospect_results
       FOR ALL
-      USING (true)
-      WITH CHECK (true);
+      TO authenticated
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.prospect_searches
+          WHERE prospect_searches.id = prospect_results.search_id
+            AND prospect_searches.user_id = auth.uid()
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.prospect_searches
+          WHERE prospect_searches.id = prospect_results.search_id
+            AND prospect_searches.user_id = auth.uid()
+        )
+      );
   END IF;
 END $$;

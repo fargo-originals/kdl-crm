@@ -6,10 +6,16 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabaseServer
+  let query = supabaseServer
     .from("tickets")
     .select("*, reporter:users!tickets_reporter_id_fkey(first_name, last_name), company:companies(name)")
     .order("created_at", { ascending: false });
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    query = query.or(`assignee_id.eq.${session.sub},reporter_id.eq.${session.sub}`);
+  }
+
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data || []);
