@@ -14,14 +14,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { createClient } from "@supabase/supabase-js";
 import { Plus, Search, Mail, Phone, Building2, Loader2 } from "lucide-react";
 
-// anon client only for reading companies dropdown (no RLS issue there)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface Contact {
   id: string;
