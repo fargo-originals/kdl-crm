@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Calendar, User, AlertCircle, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { Plus, Search, Calendar, User, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 interface Ticket {
   id: string;
   title: string;
@@ -117,7 +118,7 @@ export default function TicketsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <PageSpinner />
       ) : filteredTickets.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">No hay tickets todavía</p>
@@ -202,7 +203,7 @@ export default function TicketsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={saving || !form.title || !form.description}>
-              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Crear ticket"}
+              {saving ? <><Spinner size="sm" tone="current" className="mr-2" />Guardando...</> : "Crear ticket"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -10,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, Globe, MapPin, Phone, Loader2, Pencil, X, Check,
+  ArrowLeft, Globe, MapPin, Phone, Pencil, X, Check,
   Mail, ExternalLink, MessageCircle,
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 
 interface Company {
   id: string;
@@ -99,11 +100,7 @@ export default function CompanyDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageSpinner containerClassName="py-24" />;
   }
 
   if (!company) {
@@ -219,7 +216,7 @@ export default function CompanyDetailPage() {
                 <X className="mr-2 h-4 w-4" />Cancelar
               </Button>
               <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                {saving ? <Spinner size="sm" tone="current" className="mr-2" /> : <Check className="mr-2 h-4 w-4" />}
                 Guardar
               </Button>
             </>

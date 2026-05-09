@@ -16,7 +16,6 @@ import {
 import {
   CheckCircle2,
   ExternalLink,
-  Loader2,
   Mail,
   Calendar,
   MessageSquare,
@@ -25,6 +24,7 @@ import {
   XCircle,
   Settings2,
 } from "lucide-react";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 
 interface Integration {
   id: string;
@@ -245,9 +245,7 @@ export default function IntegrationsPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <PageSpinner />
       ) : (
         categories.map(category => (
           <div key={category}>
@@ -296,7 +294,7 @@ export default function IntegrationsPage() {
                             onClick={() => disconnect(integration.id)}
                             disabled={connecting === integration.id}
                           >
-                            {connecting === integration.id && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                            {connecting === integration.id && <Spinner size="xs" tone="current" className="mr-2" />}
                             Desconectar
                           </Button>
                         ) : configured ? (
@@ -305,7 +303,7 @@ export default function IntegrationsPage() {
                             onClick={() => connect(integration.id)}
                             disabled={connecting === integration.id}
                           >
-                            {connecting === integration.id && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                            {connecting === integration.id && <Spinner size="xs" tone="current" className="mr-2" />}
                             Conectar
                           </Button>
                         ) : (
@@ -423,7 +421,7 @@ export default function IntegrationsPage() {
                   onClick={saveCredentials}
                   disabled={saving || !clientId.trim() || !clientSecret.trim()}
                 >
-                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {saving && <Spinner size="sm" tone="current" className="mr-2" />}
                   Guardar credenciales
                 </Button>
                 <Button variant="outline" onClick={() => setSetupProvider(null)}>

@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Globe, Loader2, RefreshCw, X } from "lucide-react";
+import { Check, Globe, RefreshCw, X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ImportButton } from "@/components/app/prospecting/import-button";
@@ -166,7 +167,7 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
         <div className="flex items-center gap-2">
           {isInProgress && (
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Spinner size="xs" />
               {data.search.status === "searching" ? "Buscando en Google Maps..." : "Enriqueciendo datos..."}
             </span>
           )}
@@ -192,7 +193,7 @@ export function ResultsTable({ initialData }: { initialData: SearchResultsPayloa
           <CardContent className="py-12 text-center text-muted-foreground">
             {isInProgress ? (
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin" />
+                <Spinner size="lg" />
                 <p>Buscando negocios... Los resultados aparecerán aquí cuando Apify finalice.</p>
               </div>
             ) : (

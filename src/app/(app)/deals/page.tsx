@@ -11,7 +11,8 @@ import { Select } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, DollarSign, User, Loader2 } from "lucide-react";
+import { Plus, DollarSign, User } from "lucide-react";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 interface Deal {
   id: string;
   name: string;
@@ -126,7 +127,7 @@ export default function DealsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <PageSpinner />
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-3 overflow-x-auto pb-4">
@@ -235,7 +236,7 @@ export default function DealsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={saving || !form.name}>
-              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Crear deal"}
+              {saving ? <><Spinner size="sm" tone="current" className="mr-2" />Guardando...</> : "Crear deal"}
             </Button>
           </DialogFooter>
         </DialogContent>

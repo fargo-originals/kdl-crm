@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MessageCircle, Mail, Phone, Bot, User } from 'lucide-react';
+import { PageSpinner } from '@/components/ui/spinner';
 
 interface Lead {
   id: string;
@@ -91,7 +92,7 @@ export default function LeadDetailPage() {
     setLead(updated);
   }
 
-  if (!lead) return <p className="text-muted-foreground">Cargando...</p>;
+  if (!lead) return <PageSpinner message="Cargando..." />;
 
   const allMessages = sessions.flatMap(s =>
     (s.messages as AgentMessage[]).map(m => ({ ...m, channel: s.channel, sessionStatus: s.status }))

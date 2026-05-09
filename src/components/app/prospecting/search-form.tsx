@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -76,7 +77,7 @@ export function SearchForm() {
           </div>
           <div className="flex items-end">
             <Button type="submit" disabled={loading} className="w-full md:w-auto">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+              {loading ? <Spinner size="sm" tone="current" className="mr-2" /> : <Search className="mr-2 h-4 w-4" />}
               Buscar
             </Button>
           </div>
