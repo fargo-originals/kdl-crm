@@ -12,13 +12,6 @@ import {
 import { useRouter } from "next/navigation";
 import { Plus, Search, Globe, MapPin, Users, Loader2, Phone, ExternalLink } from "lucide-react";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 interface Company {
   id: string;
   name: string;

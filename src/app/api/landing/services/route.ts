@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { CreateLandingServiceSchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
+import { validateJsonBody } from '@/lib/validation';
 
 export async function GET() {
   const session = await getSession();
@@ -19,7 +21,8 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json();
+  const validated = await validateJsonBody(req, CreateLandingServiceSchema);
+  if ('response' in validated) return validated.response;
 
   const { data: last } = await supabaseServer
     .from('landing_services')
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabaseServer
     .from('landing_services')
-    .insert({ ...body, position, created_by: session.sub })
+    .insert({ ...validated.data, position, created_by: session.sub })
     .select()
     .single();
 

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { requireAdmin } from '@/lib/auth/session';
 import { supabaseServer } from '@/lib/supabase-server';
 import { revalidateLanding } from '@/lib/landing/revalidate';
 
 export async function POST() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  await requireAdmin();
 
   // Sync published_value from value in landing_settings
   const { data: settings } = await supabaseServer.from('landing_settings').select('id, value');

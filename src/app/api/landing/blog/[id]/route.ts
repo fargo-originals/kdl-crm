@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { UpdateLandingBlogPostSchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
+import { validateJsonBody } from '@/lib/validation';
 
 const TABLE = 'landing_blog_posts';
 
@@ -18,9 +20,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const body = await req.json();
-  const updates: Record<string, unknown> = { ...body, updated_at: new Date().toISOString() };
-  if (body.status === 'published' && !body.published_at) {
+  const validated = await validateJsonBody(req, UpdateLandingBlogPostSchema);
+  if ('response' in validated) return validated.response;
+
+  const updates: Record<string, unknown> = { ...validated.data, updated_at: new Date().toISOString() };
+  if (validated.data.status === 'published' && !validated.data.published_at) {
     updates.published_at = new Date().toISOString();
   }
   const { data, error } = await supabaseServer.from(TABLE).update(updates).eq('id', id).select().single();

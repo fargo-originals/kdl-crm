@@ -4,14 +4,38 @@ import { getSupabaseServer } from "@/lib/supabase-server";
 import { getSession } from "@/lib/auth/session";
 import { Users, Building2, DollarSign, Ticket, TrendingUp, Clock } from "lucide-react";
 
-async function getStats() {
+function hasGlobalCrmAccess(role?: string) {
+  return role === "owner" || role === "admin";
+}
+
+interface Activity {
+  id: string;
+  subject: string;
+  type: string;
+  created_at: string;
+}
+
+async function getStats(session: Awaited<ReturnType<typeof getSession>>) {
   const supabase = getSupabaseServer();
+  const scoped = !hasGlobalCrmAccess(session?.role);
+
+  let contactsQuery = supabase.from("contacts").select("*", { count: "exact", head: true });
+  let companiesQuery = supabase.from("companies").select("*", { count: "exact", head: true });
+  let dealsQuery = supabase.from("deals").select("*", { count: "exact", head: true });
+  let ticketsQuery = supabase.from("tickets").select("*", { count: "exact", head: true }).eq("status", "open");
+
+  if (scoped && session) {
+    contactsQuery = contactsQuery.eq("owner_id", session.sub);
+    companiesQuery = companiesQuery.eq("owner_id", session.sub);
+    dealsQuery = dealsQuery.eq("owner_id", session.sub);
+    ticketsQuery = ticketsQuery.or(`assignee_id.eq.${session.sub},reporter_id.eq.${session.sub}`);
+  }
 
   const [contactsCount, companiesCount, dealsCount, ticketsCount] = await Promise.all([
-    supabase.from("contacts").select("*", { count: "exact", head: true }),
-    supabase.from("companies").select("*", { count: "exact", head: true }),
-    supabase.from("deals").select("*", { count: "exact", head: true }),
-    supabase.from("tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+    contactsQuery,
+    companiesQuery,
+    dealsQuery,
+    ticketsQuery,
   ]);
 
   return {
@@ -22,22 +46,34 @@ async function getStats() {
   };
 }
 
-async function getRecentActivities() {
+async function getRecentActivities(session: Awaited<ReturnType<typeof getSession>>) {
   const supabase = getSupabaseServer();
-  const { data } = await supabase
+  let query = supabase
     .from("activities")
     .select("*, user:users(first_name, last_name)")
     .order("created_at", { ascending: false })
     .limit(5);
+
+  if (!hasGlobalCrmAccess(session?.role) && session) {
+    query = query.eq("user_id", session.sub);
+  }
+
+  const { data } = await query;
   return data || [];
 }
 
-async function getPipelineData() {
+async function getPipelineData(session: Awaited<ReturnType<typeof getSession>>) {
   const supabase = getSupabaseServer();
-  const { data } = await supabase
+  let query = supabase
     .from("deals")
     .select("stage, value")
     .order("created_at", { ascending: false });
+
+  if (!hasGlobalCrmAccess(session?.role) && session) {
+    query = query.eq("owner_id", session.sub);
+  }
+
+  const { data } = await query;
 
   const stages = ["New", "Qualified", "Meeting", "Proposal", "Negotiation", "Closed Won"];
   const result = stages.map((stage) => ({
@@ -67,9 +103,9 @@ function formatCurrency(value: number) {
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const stats = await getStats();
-  const activities = await getRecentActivities();
-  const pipeline = await getPipelineData();
+  const stats = await getStats(session);
+  const activities = await getRecentActivities(session);
+  const pipeline = await getPipelineData(session);
 
   const statsData = [
     { title: "Contactos", value: stats.contacts.toString(), icon: Users, change: "0%" },
@@ -115,7 +151,7 @@ export default async function DashboardPage() {
               {activities.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No hay actividad reciente</p>
               ) : (
-                activities.map((activity: any) => (
+                activities.map((activity: Activity) => (
                   <div key={activity.id} className="flex items-center justify-between border-b pb-3 last:border-0">
                     <div>
                       <p className="font-medium">{activity.subject}</p>

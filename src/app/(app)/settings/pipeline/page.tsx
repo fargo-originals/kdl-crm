@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { GitBranch, Plus, Trash2, GripVertical } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
+import { Plus, Trash2, GripVertical } from "lucide-react";
 interface PipelineStage {
   id: string;
   name: string;
@@ -35,12 +28,11 @@ export default function PipelineSettingsPage() {
 
   async function loadStages() {
     setLoading(true);
-    const { data } = await supabase
-      .from("pipeline_stages")
-      .select("*")
-      .order("position");
-    
-    if (data) setStages(data);
+    const res = await fetch("/api/pipeline/stages");
+    if (res.ok) {
+      const data = await res.json();
+      setStages(data);
+    }
     setLoading(false);
   }
 
@@ -50,30 +42,29 @@ export default function PipelineSettingsPage() {
     const position = stages.length;
     const color = colors[position % colors.length];
     
-    const { error } = await supabase
-      .from("pipeline_stages")
-      .insert({
+    const res = await fetch("/api/pipeline/stages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         name: newStage,
         position,
         color,
         probability_default: 50,
         is_won: false,
         is_lost: false,
-      });
-    
-    if (!error) {
+      }),
+    });
+
+    if (res.ok) {
       setNewStage("");
       loadStages();
     }
   }
 
   async function deleteStage(id: string) {
-    const { error } = await supabase
-      .from("pipeline_stages")
-      .delete()
-      .eq("id", id);
-    
-    if (!error) {
+    const res = await fetch(`/api/pipeline/stages/${id}`, { method: "DELETE" });
+
+    if (res.ok) {
       loadStages();
     }
   }

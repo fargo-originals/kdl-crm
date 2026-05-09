@@ -230,18 +230,42 @@ ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prospect_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prospect_results ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies (allow all for authenticated users - to be refined)
-CREATE POLICY "Users can do anything" ON users FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Companies can do anything" ON companies FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Contacts can do anything" ON contacts FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Deals can do anything" ON deals FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Tickets can do anything" ON tickets FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Tasks can do anything" ON tasks FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Activities can do anything" ON activities FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Pipeline can do anything" ON pipeline_stages FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Integrations can do anything" ON integrations FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Prospect searches can do anything" ON prospect_searches FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Prospect results can do anything" ON prospect_results FOR ALL USING (true) WITH CHECK (true);
+-- RLS helpers and policies (authenticated, role-aware, ownership-aware)
+CREATE OR REPLACE FUNCTION public.current_crm_role()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT role FROM public.users WHERE id = auth.uid()
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_crm_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.current_crm_role() IN ('owner', 'admin')
+$$;
+
+CREATE POLICY "Users select self or admin" ON users FOR SELECT TO authenticated USING (id = auth.uid() OR public.is_crm_admin());
+CREATE POLICY "Users insert admin only" ON users FOR INSERT TO authenticated WITH CHECK (public.is_crm_admin());
+CREATE POLICY "Users update self or admin" ON users FOR UPDATE TO authenticated USING (id = auth.uid() OR public.is_crm_admin()) WITH CHECK (id = auth.uid() OR public.is_crm_admin());
+CREATE POLICY "Users delete owner only" ON users FOR DELETE TO authenticated USING (public.current_crm_role() = 'owner');
+CREATE POLICY "Companies owned or admin" ON companies FOR ALL TO authenticated USING (public.is_crm_admin() OR owner_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR owner_id = auth.uid());
+CREATE POLICY "Contacts owned or admin" ON contacts FOR ALL TO authenticated USING (public.is_crm_admin() OR owner_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR owner_id = auth.uid());
+CREATE POLICY "Deals owned or admin" ON deals FOR ALL TO authenticated USING (public.is_crm_admin() OR owner_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR owner_id = auth.uid());
+CREATE POLICY "Tickets assigned reported or admin" ON tickets FOR ALL TO authenticated USING (public.is_crm_admin() OR assignee_id = auth.uid() OR reporter_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR assignee_id = auth.uid() OR reporter_id = auth.uid());
+CREATE POLICY "Tasks assigned created or admin" ON tasks FOR ALL TO authenticated USING (public.is_crm_admin() OR assignee_id = auth.uid() OR created_by_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR assignee_id = auth.uid() OR created_by_id = auth.uid());
+CREATE POLICY "Activities owned user or admin" ON activities FOR ALL TO authenticated USING (public.is_crm_admin() OR user_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR user_id = auth.uid());
+CREATE POLICY "Pipeline read authenticated" ON pipeline_stages FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Pipeline write admin" ON pipeline_stages FOR ALL TO authenticated USING (public.is_crm_admin()) WITH CHECK (public.is_crm_admin());
+CREATE POLICY "Integrations owned or admin" ON integrations FOR ALL TO authenticated USING (public.is_crm_admin() OR user_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR user_id = auth.uid());
+CREATE POLICY "Prospect searches owned or admin" ON prospect_searches FOR ALL TO authenticated USING (public.is_crm_admin() OR user_id = auth.uid()) WITH CHECK (public.is_crm_admin() OR user_id = auth.uid());
+CREATE POLICY "Prospect results owned search or admin" ON prospect_results FOR ALL TO authenticated USING (public.is_crm_admin() OR EXISTS (SELECT 1 FROM public.prospect_searches WHERE prospect_searches.id = prospect_results.search_id AND prospect_searches.user_id = auth.uid())) WITH CHECK (public.is_crm_admin() OR EXISTS (SELECT 1 FROM public.prospect_searches WHERE prospect_searches.id = prospect_results.search_id AND prospect_searches.user_id = auth.uid()));
 
 -- Insert default pipeline stages
 INSERT INTO pipeline_stages (name, position, color, probability_default, is_won, is_lost) VALUES
