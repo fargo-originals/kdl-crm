@@ -1,11 +1,10 @@
-import { getSession } from "@/lib/auth/session";
+import { requireAdmin } from "@/lib/auth/session";
 import { supabaseServer } from "@/lib/supabase-server";
 import { canAssignRole, canManage, isValidRole } from "@/lib/auth/roles";
 import { NextResponse } from "next/server";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin();
 
   const { id } = await params;
 
@@ -56,8 +55,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await requireAdmin();
 
   const { id } = await params;
 

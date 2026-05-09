@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { requireAdmin } from '@/lib/auth/session';
 import { supabaseServer } from '@/lib/supabase-server';
 
 const BUCKET = 'landing-media';
@@ -7,10 +7,7 @@ const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session || session.role !== 'owner') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  await requireAdmin();
 
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
