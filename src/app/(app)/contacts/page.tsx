@@ -14,7 +14,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Mail, Phone, Building2, Loader2 } from "lucide-react";
+import { Plus, Search, Mail, Phone, Building2 } from "lucide-react";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 
 
 interface Contact {
@@ -154,9 +155,7 @@ export default function ContactsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <PageSpinner containerClassName="py-8" />
           ) : filteredContacts.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">No hay contactos todavía</p>
@@ -304,7 +303,7 @@ export default function ContactsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={saving || !form.first_name || !form.last_name}>
-              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Crear contacto"}
+              {saving ? <><Spinner size="sm" tone="current" className="mr-2" />Guardando...</> : "Crear contacto"}
             </Button>
           </DialogFooter>
         </DialogContent>

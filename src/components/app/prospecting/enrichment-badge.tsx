@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 
 const LABELS: Record<string, string> = {
   pending: "Pendiente",
@@ -20,7 +20,7 @@ const VARIANTS: Record<string, "secondary" | "warning" | "success" | "destructiv
 export function EnrichmentBadge({ status }: { status: string }) {
   return (
     <Badge variant={VARIANTS[status] ?? "secondary"} className="gap-1">
-      {status === "enriching" && <Loader2 className="h-3 w-3 animate-spin" />}
+      {status === "enriching" && <Spinner size="xs" tone="current" />}
       {LABELS[status] ?? status}
     </Badge>
   );

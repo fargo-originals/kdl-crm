@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MessageCircle, Mail, Phone, Clock } from 'lucide-react';
+import { PageSpinner } from '@/components/ui/spinner';
 
 interface Lead {
   id: string;
@@ -72,7 +73,7 @@ export default function LeadsPage() {
       </div>
 
       {loading ? (
-        <p className="text-muted-foreground">Cargando...</p>
+        <PageSpinner message="Cargando..." />
       ) : (
         <div className="space-y-2">
           {leads.map(lead => (

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { PageSpinner } from '@/components/ui/spinner';
 
 interface FaqItem {
   id: string;
@@ -91,7 +92,7 @@ export default function FaqPage() {
 
   useEffect(() => { load(); }, []);
 
-  if (loading) return <p className="text-muted-foreground">Cargando...</p>;
+  if (loading) return <PageSpinner message="Cargando..." />;
 
   return (
     <div className="space-y-4">

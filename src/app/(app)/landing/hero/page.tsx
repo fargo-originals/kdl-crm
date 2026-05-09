@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/app/image-upload';
+import { PageSpinner } from '@/components/ui/spinner';
 
 interface HeroItem {
   id: string;
@@ -101,7 +102,7 @@ export default function HeroPage() {
 
   useEffect(() => { load(); }, []);
 
-  if (loading) return <p className="text-muted-foreground">Cargando...</p>;
+  if (loading) return <PageSpinner message="Cargando..." />;
 
   return (
     <div className="space-y-4">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, GripVertical } from "lucide-react";
+import { PageSpinner } from "@/components/ui/spinner";
 interface PipelineStage {
   id: string;
   name: string;
@@ -98,7 +99,7 @@ export default function PipelineSettingsPage() {
           </div>
 
           {loading ? (
-            <p className="text-muted-foreground">Cargando...</p>
+            <PageSpinner message="Cargando..." containerClassName="py-8" />
           ) : stages.length === 0 ? (
             <p className="text-muted-foreground">No hay etapas configuradas.</p>
           ) : (

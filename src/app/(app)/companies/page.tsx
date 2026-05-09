@@ -10,8 +10,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Globe, MapPin, Users, Loader2, Phone, ExternalLink } from "lucide-react";
+import { Plus, Search, Globe, MapPin, Users, Phone, ExternalLink } from "lucide-react";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 interface Company {
   id: string;
   name: string;
@@ -110,7 +111,7 @@ export default function CompaniesPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <PageSpinner />
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">No hay empresas todavía</p>
@@ -257,7 +258,7 @@ export default function CompaniesPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={saving || !form.name}>
-              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Crear empresa"}
+              {saving ? <><Spinner size="sm" tone="current" className="mr-2" />Guardando...</> : "Crear empresa"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Users as UsersIcon, Loader2, Plus, Shield, Trash2 } from "lucide-react";
+import { Users as UsersIcon, Plus, Shield, Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface TeamUser {
   id: string;
@@ -139,7 +140,7 @@ export default function TeamSettingsPage() {
     return (
       <div className="space-y-6">
         <div><h1 className="text-3xl font-bold">Equipo</h1><p className="text-muted-foreground">Administra usuarios y roles</p></div>
-        <Card><CardContent className="py-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></CardContent></Card>
+        <Card><CardContent className="py-8 text-center"><Spinner size="lg" className="mx-auto" /></CardContent></Card>
       </div>
     );
   }
@@ -182,7 +183,7 @@ export default function TeamSettingsPage() {
             </div>
             <div className="flex gap-2">
               <Button onClick={addUser} disabled={adding || !newUserEmail}>
-                {adding ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Agregando...</> : "Agregar usuario"}
+                {adding ? <><Spinner size="sm" tone="current" className="mr-2" />Agregando...</> : "Agregar usuario"}
               </Button>
               <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancelar</Button>
             </div>
@@ -265,7 +266,7 @@ export default function TeamSettingsPage() {
                           onClick={() => deleteUser(user.id)}
                           disabled={updating === user.id}
                         >
-                          {updating === user.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          {updating === user.id ? <Spinner size="sm" tone="current" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
                       )}
                     </div>

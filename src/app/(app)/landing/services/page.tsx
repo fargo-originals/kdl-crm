@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { PageSpinner } from '@/components/ui/spinner';
 
 interface Service {
   id: string;
@@ -43,7 +44,7 @@ export default function ServicesPage() {
 
   useEffect(() => { load(); }, []);
 
-  if (loading) return <p className="text-muted-foreground">Cargando...</p>;
+  if (loading) return <PageSpinner message="Cargando..." />;
 
   return (
     <div className="space-y-4">

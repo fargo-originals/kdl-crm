@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Calendar, User, Clock, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Calendar, User, Clock, CheckCircle2 } from "lucide-react";
+import { Spinner, PageSpinner } from "@/components/ui/spinner";
 interface Task {
   id: string;
   title: string;
@@ -102,7 +103,7 @@ export default function TasksPage() {
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            <PageSpinner containerClassName="py-8" />
           ) : filteredTasks.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">No hay tareas todavía</p>
@@ -182,7 +183,7 @@ export default function TasksPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={handleCreate} disabled={saving || !form.title}>
-              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Crear tarea"}
+              {saving ? <><Spinner size="sm" tone="current" className="mr-2" />Guardando...</> : "Crear tarea"}
             </Button>
           </DialogFooter>
         </DialogContent>

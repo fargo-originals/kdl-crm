@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bot, Download, Loader2 } from "lucide-react";
+import { Bot, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 export function ImportButton({
   searchId,
@@ -54,7 +55,7 @@ export function ImportButton({
         variant="secondary"
       >
         {mutation.isPending
-          ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ? <Spinner size="sm" tone="current" className="mr-2" />
           : <Download className="mr-2 h-4 w-4" />}
         Importar aprobados
       </Button>

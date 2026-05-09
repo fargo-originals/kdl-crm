@@ -2,7 +2,8 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { read, utils } from 'xlsx';
-import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Globe, GlobeOff, Mail, Phone, MessageCircle, X, Loader2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Globe, GlobeOff, Mail, Phone, MessageCircle, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { ApifyLeadRow } from '@/app/api/leads/import/route';
@@ -161,7 +162,7 @@ export default function ApifyImportPage() {
 
       {loading && (
         <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
-          <Loader2 className="h-5 w-5 animate-spin" /> Procesando archivo...
+          <Spinner size="sm" /> Procesando archivo...
         </div>
       )}
 
@@ -271,7 +272,7 @@ export default function ApifyImportPage() {
               <div className="flex gap-3">
                 <Button onClick={handleImport} disabled={importing}>
                   {importing
-                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importando...</>
+                    ? <><Spinner size="sm" tone="current" className="mr-2" /> Importando...</>
                     : `Importar ${leads.length} leads`}
                 </Button>
                 <Button variant="outline" onClick={() => { setLeads([]); setFileName(''); }}>
