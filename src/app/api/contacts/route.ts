@@ -8,10 +8,16 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabaseServer
+  let query = supabaseServer
     .from("contacts")
     .select("*, company:companies(name)")
     .order("created_at", { ascending: false });
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    query = query.eq("owner_id", session.sub);
+  }
+
+  const { data, error } = await query;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data || []);

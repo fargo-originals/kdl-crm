@@ -12,12 +12,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const validated = await validateJsonBody(req, UpdateDealSchema);
   if ('response' in validated) return validated.response;
 
-  const { data, error } = await supabaseServer
+  let query = supabaseServer
     .from("deals")
     .update({ ...validated.data, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
+    .eq("id", id);
+
+  if (session.role !== "owner" && session.role !== "admin") {
+    query = query.eq("owner_id", session.sub);
+  }
+
+  const { data, error } = await query.select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
