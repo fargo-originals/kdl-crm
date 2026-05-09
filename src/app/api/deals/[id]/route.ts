@@ -12,7 +12,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const validated = await validateJsonBody(req, UpdateDealSchema);
   if ('response' in validated) return validated.response;
 
-<<<<<<< codex/create-zod-schemas-for-domains
   const updatePayload = {
     ...validated.data,
     updated_at: new Date().toISOString(),
@@ -21,11 +20,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   let query = supabaseServer
     .from("deals")
     .update(updatePayload)
-=======
-  let query = supabaseServer
-    .from("deals")
-    .update(body)
->>>>>>> claude/integrate-landing-page-dNHEC
     .eq("id", id);
 
   if (session.role !== "owner" && session.role !== "admin") {
