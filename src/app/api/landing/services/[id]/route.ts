@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { UpdateLandingServiceSchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
+import { validateJsonBody } from '@/lib/validation';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -16,10 +18,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const body = await req.json();
+  const validated = await validateJsonBody(req, UpdateLandingServiceSchema);
+  if ('response' in validated) return validated.response;
   const { data, error } = await supabaseServer
     .from('landing_services')
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update({ ...validated.data, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();

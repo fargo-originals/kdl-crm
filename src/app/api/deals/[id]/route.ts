@@ -1,5 +1,7 @@
 import { getSession } from "@/lib/auth/session";
+import { UpdateDealSchema } from "@/lib/crm/schemas";
 import { supabaseServer } from "@/lib/supabase-server";
+import { validateJsonBody } from "@/lib/validation";
 import { NextResponse } from "next/server";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -7,11 +9,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const body = await req.json();
+  const validated = await validateJsonBody(req, UpdateDealSchema);
+  if ('response' in validated) return validated.response;
+
+<<<<<<< codex/create-zod-schemas-for-domains
+  const updatePayload = {
+    ...validated.data,
+    updated_at: new Date().toISOString(),
+  };
 
   let query = supabaseServer
     .from("deals")
+    .update(updatePayload)
+=======
+  let query = supabaseServer
+    .from("deals")
     .update(body)
+>>>>>>> claude/integrate-landing-page-dNHEC
     .eq("id", id);
 
   if (session.role !== "owner" && session.role !== "admin") {
