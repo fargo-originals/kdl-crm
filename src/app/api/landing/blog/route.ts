@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { CreateLandingBlogPostSchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
+import { validateJsonBody } from '@/lib/validation';
 
 const TABLE = 'landing_blog_posts';
 
@@ -20,10 +22,12 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json();
+  const validated = await validateJsonBody(req, CreateLandingBlogPostSchema);
+  if ('response' in validated) return validated.response;
+
   const { data, error } = await supabaseServer
     .from(TABLE)
-    .insert({ ...body, author_id: session.sub, status: body.status ?? 'draft' })
+    .insert({ ...validated.data, author_id: session.sub })
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

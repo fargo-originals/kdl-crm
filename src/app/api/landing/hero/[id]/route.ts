@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
+import { UpdateLandingHeroSchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
+import { validateJsonBody } from '@/lib/validation';
 
 const TABLE = 'landing_hero';
 
@@ -18,8 +20,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const body = await req.json();
-  const { data, error } = await supabaseServer.from(TABLE).update({ ...body, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+  const validated = await validateJsonBody(req, UpdateLandingHeroSchema);
+  if ('response' in validated) return validated.response;
+  const { data, error } = await supabaseServer
+    .from(TABLE)
+    .update({ ...validated.data, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }

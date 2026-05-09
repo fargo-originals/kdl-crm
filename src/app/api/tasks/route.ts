@@ -1,5 +1,7 @@
 import { getSession } from "@/lib/auth/session";
+import { CreateTaskSchema } from "@/lib/crm/schemas";
 import { supabaseServer } from "@/lib/supabase-server";
+import { validateJsonBody } from "@/lib/validation";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -19,11 +21,13 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
+  const validated = await validateJsonBody(req, CreateTaskSchema);
+  if ('response' in validated) return validated.response;
 
+  const { assignee_id, ...task } = validated.data;
   const { data, error } = await supabaseServer
     .from("tasks")
-    .insert({ ...body, created_by_id: session.sub, assignee_id: session.sub })
+    .insert({ ...task, created_by_id: session.sub, assignee_id: assignee_id ?? session.sub })
     .select()
     .single();
 
