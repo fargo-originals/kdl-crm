@@ -12,9 +12,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const validated = await validateJsonBody(req, UpdateDealSchema);
   if ('response' in validated) return validated.response;
 
+  const updatePayload = {
+    ...validated.data,
+    updated_at: new Date().toISOString(),
+  };
+
   let query = supabaseServer
     .from("deals")
-    .update({ ...validated.data, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq("id", id);
 
   if (session.role !== "owner" && session.role !== "admin") {
