@@ -9,13 +9,14 @@ export type ApifyRecord = {
 };
 
 // compass/crawler-google-places output record
-// Note: email is NOT returned by this actor — comes from WCC enrichment
+// Note: email is sometimes returned directly by this actor (from Google Business Profile)
 export type GoogleMapsRecord = {
   title?: string;
   totalScore?: number;
   reviewsCount?: number;
   phone?: string;
   website?: string;
+  email?: string;
   categoryName?: string;
   address?: string;
   neighborhood?: string;
@@ -103,9 +104,18 @@ export async function launchEnrichmentRun(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      startUrls: urls.map((url) => ({ url })),
-      maxCrawlPages,
-      maxCrawlDepth: 0,
+      startUrls: [
+        ...urls.map((url) => ({ url })),
+        // Añadir rutas de contacto explícitas para cada dominio
+        ...urls.flatMap((url) => {
+          try {
+            const base = new URL(url).origin;
+            return ['/contacto', '/contact', '/sobre-nosotros', '/about'].map((path) => ({ url: `${base}${path}` }));
+          } catch { return []; }
+        }),
+      ],
+      maxCrawlPages: maxCrawlPages * 5,
+      maxCrawlDepth: 1,
       crawlerType: "cheerio",
       proxyConfiguration: { useApifyProxy: true },
       webhooks: [

@@ -21,16 +21,30 @@ function unique(values: string[]) {
 }
 
 function extractEmail(content: string) {
-  const emails = unique(content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) ?? []).map((email) =>
-    email.toLowerCase()
+  // 1. Primero extraer de mailto: links (más fiables — son intencionales)
+  const mailtoEmails = unique(
+    [...content.matchAll(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi)].map((m) =>
+      m[1].toLowerCase()
+    )
   );
-  if (emails.length === 0) return null;
+
+  // 2. Después por regex general en texto plano
+  const textEmails = unique(
+    content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) ?? []
+  ).map((e) => e.toLowerCase());
+
+  // Priorizar mailto: y no-genéricos
+  const all = unique([...mailtoEmails, ...textEmails]).filter(
+    (e) => !e.includes('sentry') && !e.includes('example') && !e.includes('wixpress')
+  );
+
+  if (all.length === 0) return null;
 
   return (
-    emails.find((email) => {
+    all.find((email) => {
       const prefix = email.split("@")[0];
       return !GENERIC_EMAIL_PREFIXES.has(prefix);
-    }) ?? emails[0]
+    }) ?? all[0]
   );
 }
 

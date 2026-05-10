@@ -87,11 +87,13 @@ export async function processGoogleMapsRun(runId: string) {
       district: r.district ?? null,
       phone: r.phone ?? null,
       website: r.website ?? null,
+      email: r.email ?? null,
       logo_url: r.imageUrl ?? (Array.isArray(r.imageUrls) ? r.imageUrls[0] : null) ?? null,
       google_rating: r.totalScore ?? null,
       google_review_count: r.reviewsCount ?? null,
       category: r.categoryName ?? null,
-      enrichment_status: r.website ? "pending" : "done",
+      // Si ya tiene email de Google, marcamos done directamente aunque tenga web
+      enrichment_status: (r.email || !r.website) ? "done" : "pending",
     }));
 
   if (rows.length > 0) {
@@ -162,7 +164,7 @@ export async function processApifyRun(runId: string) {
   const records = await getRunDataset(runId);
   const { data: results, error: resultsError } = await supabaseServer
     .from("prospect_results")
-    .select("id, website")
+    .select("id, website, email")
     .eq("search_id", search.id);
 
   if (resultsError) throw new Error(resultsError.message);
@@ -194,7 +196,8 @@ export async function processApifyRun(runId: string) {
     await supabaseServer
       .from("prospect_results")
       .update({
-        email: parsed.email,
+        // Solo sobreescribir email si aún no tiene uno (Google Maps tiene prioridad)
+        ...(!result.email && parsed.email ? { email: parsed.email } : {}),
         instagram: parsed.instagram,
         contact_name: parsed.contactName,
         contact_title: parsed.contactTitle,

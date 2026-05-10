@@ -202,5 +202,49 @@ export const prospectResults = pgTable('prospect_results', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+export const emailCampaigns = pgTable('email_campaigns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  name: text('name').notNull(),
+  sector: text('sector').notNull(),
+  tono: text('tono').notNull().default('tu_cercano'),
+  templateType: text('template_type').notNull().default('email_1_first_contact'),
+  subject: text('subject').notNull(),
+  bodyHtml: text('body_html').notNull(),
+  status: text('status').notNull().default('draft'),
+  recipientCount: integer('recipient_count').default(0),
+  sentCount: integer('sent_count').default(0),
+  openedCount: integer('opened_count').default(0),
+  clickedCount: integer('clicked_count').default(0),
+  bouncedCount: integer('bounced_count').default(0),
+  scheduledAt: timestamp('scheduled_at'),
+  sentAt: timestamp('sent_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const emailCampaignRecipients = pgTable('email_campaign_recipients', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  campaignId: uuid('campaign_id').references(() => emailCampaigns.id).notNull(),
+  contactId: uuid('contact_id').references(() => contacts.id),
+  email: text('email').notNull(),
+  variables: jsonb('variables'),
+  status: text('status').notNull().default('pending'),
+  sentAt: timestamp('sent_at'),
+  openedAt: timestamp('opened_at'),
+  clickedAt: timestamp('clicked_at'),
+  lastActivityAt: timestamp('last_activity_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const emailCampaignEvents = pgTable('email_campaign_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  campaignId: uuid('campaign_id').references(() => emailCampaigns.id).notNull(),
+  recipientId: uuid('recipient_id').references(() => emailCampaignRecipients.id),
+  type: text('type').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 export * from './landing';
 export * from './agents';
