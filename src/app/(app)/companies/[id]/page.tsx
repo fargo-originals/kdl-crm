@@ -27,6 +27,7 @@ interface Company {
   city: string | null;
   country: string | null;
   phone: string | null;
+  email: string | null;
   website: string | null;
   instagram: string | null;
   facebook: string | null;
@@ -170,6 +171,11 @@ export default function CompanyDetailPage() {
 
             {/* Quick-action links row */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
+              {company.email && (
+                <a href={`mailto:${company.email}`} className="inline-flex items-center gap-1 text-sm hover:text-primary">
+                  <Mail className="h-3.5 w-3.5" />{company.email}
+                </a>
+              )}
               {company.phone && (
                 <a href={`tel:${company.phone}`} className="inline-flex items-center gap-1 text-sm hover:text-primary">
                   <Phone className="h-3.5 w-3.5" />{company.phone}
@@ -254,6 +260,18 @@ export default function CompanyDetailPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">Contacto y ubicación</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            {editing ? (
+              field("Email", "email", "hola@negocio.com")
+            ) : (
+              <div className="space-y-1">
+                <Label>Email</Label>
+                {company.email
+                  ? <a href={`mailto:${company.email}`} className="flex items-center gap-2 py-2 text-sm hover:text-primary">
+                      <Mail className="h-4 w-4" />{company.email}
+                    </a>
+                  : <p className="text-sm py-2 text-muted-foreground">—</p>}
+              </div>
+            )}
             {editing ? (
               field("Teléfono", "phone", "+34 600 000 000")
             ) : (

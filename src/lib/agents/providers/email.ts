@@ -3,12 +3,14 @@ import { Resend } from 'resend';
 const getResend = () => new Resend(process.env.RESEND_API_KEY ?? 'placeholder');
 const FROM = () => process.env.RESEND_FROM_EMAIL ?? 'hola@kentodevlab.com';
 
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string, replyTo?: string) {
+  const inbound = replyTo ?? process.env.RESEND_INBOUND_EMAIL;
   const { data, error } = await getResend().emails.send({
     from: FROM(),
     to,
     subject,
     html,
+    ...(inbound ? { reply_to: inbound } : {}),
   });
   if (error) throw new Error(`Resend error: ${error.message}`);
   return data;

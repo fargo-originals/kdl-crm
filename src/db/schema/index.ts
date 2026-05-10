@@ -29,6 +29,7 @@ export const companies = pgTable('companies', {
   city: text('city'),
   country: text('country'),
   phone: text('phone'),
+  email: text('email'),
   website: text('website'),
   instagram: text('instagram'),
   facebook: text('facebook'),

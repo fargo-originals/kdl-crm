@@ -83,6 +83,7 @@ export async function importProspectToCRM(
         city: "Madrid",
         country: "España",
         phone: result.phone,
+        email: result.email,
         website: result.website,
         owner_id: userId,
       })
