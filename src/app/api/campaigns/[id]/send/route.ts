@@ -86,6 +86,17 @@ export async function POST(_req: Request, { params }: Params) {
             .from('email_campaign_events')
             .insert({ campaign_id: id, recipient_id: recipient.id, type: 'sent', created_at: now });
 
+          // Crear agent_session para capturar respuestas del prospecto automáticamente
+          await supabaseServer
+            .from('agent_sessions')
+            .insert({
+              campaign_recipient_id: recipient.id,
+              channel: 'email',
+              messages: [{ role: 'assistant', content: rendered.bodyText, ts: now }],
+              status: 'active',
+              external_contact_id: recipient.email.toLowerCase(),
+            });
+
           sentCount++;
         } catch {
           await supabaseServer

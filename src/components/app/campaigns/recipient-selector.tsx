@@ -68,12 +68,12 @@ async function saveRecipients(campaignId: string, recipients: SelectedRecipient[
 }
 
 function channelIcon(p: Prospect) {
-  if (p.email) return <Mail className="h-3 w-3 text-green-600" title="Tiene email" />;
+  if (p.email) return <Mail className="h-3 w-3 text-green-600" />;
   const digits = (p.phone ?? '').replace(/\D/g, '');
   const local = digits.startsWith('34') ? digits.slice(2) : digits;
   if (local.startsWith('6') || local.startsWith('7'))
-    return <MessageCircle className="h-3 w-3 text-emerald-500" title="WhatsApp" />;
-  if (p.phone) return <Phone className="h-3 w-3 text-muted-foreground" title="Teléfono fijo" />;
+    return <MessageCircle className="h-3 w-3 text-emerald-500" />;
+  if (p.phone) return <Phone className="h-3 w-3 text-muted-foreground" />;
   return <span className="h-3 w-3 text-muted-foreground/30">—</span>;
 }
 
@@ -291,8 +291,8 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
                             </span>
                           )}
                           {p.website
-                            ? <Globe className="h-3 w-3 text-blue-400" title="Tiene web" />
-                            : <GlobeOff className="h-3 w-3 text-orange-400" title="Sin web" />}
+                            ? <Globe className="h-3 w-3 text-blue-400" />
+                            : <GlobeOff className="h-3 w-3 text-orange-400" />}
                           {channelIcon(p)}
                         </div>
                       </div>

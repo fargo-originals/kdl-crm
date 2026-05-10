@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, jsonb, boolean, integer, pgEnum } from 'drizzle-orm/pg-core';
-import { users } from './index';
+import { users, emailCampaignRecipients } from './index';
 import { leadInquiries } from './landing';
 
 export const agentChannelEnum = pgEnum('agent_channel', ['whatsapp', 'email']);
@@ -8,7 +8,8 @@ export const appointmentStatusEnum = pgEnum('appointment_status', ['proposed', '
 
 export const agentSessions = pgTable('agent_sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  leadId: uuid('lead_id').references(() => leadInquiries.id).notNull(),
+  leadId: uuid('lead_id').references(() => leadInquiries.id),
+  campaignRecipientId: uuid('campaign_recipient_id').references(() => emailCampaignRecipients.id),
   channel: agentChannelEnum('channel').notNull(),
   messages: jsonb('messages').notNull().default([]),
   status: agentSessionStatusEnum('status').notNull().default('active'),

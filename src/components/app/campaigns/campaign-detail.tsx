@@ -155,7 +155,6 @@ export function CampaignDetail({ campaignId }: Props) {
             <RecipientSelector
               campaignId={campaignId}
               sector={campaign.sector}
-              initialCount={campaign.recipient_count}
               onSaved={(count) => {
                 queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
                 setShowSelector(false);
