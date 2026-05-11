@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Ticket,
-  CheckSquare, Settings, Radar, LogOut, Inbox, Globe, Upload, Menu, X, Mail,
+  CheckSquare, Settings, Radar, LogOut, Inbox, Globe, Upload, Menu, X, Mail, MailOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
@@ -19,6 +19,7 @@ const navigation = [
   { name: "Pipeline", href: "/deals", icon: DollarSign },
   { name: "Prospeccion", href: "/prospecting", icon: Radar },
   { name: "Importar Apify", href: "/prospecting/import", icon: Upload },
+  { name: "Bandeja", href: "/inbox", icon: MailOpen },
   { name: "Campañas", href: "/campaigns", icon: Mail },
   { name: "Landing CMS", href: "/landing", icon: Globe },
   { name: "Tickets", href: "/tickets", icon: Ticket },
@@ -26,7 +27,7 @@ const navigation = [
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
-const PREFIX_ROUTES = ["/settings", "/prospecting", "/leads", "/landing", "/campaigns"];
+const PREFIX_ROUTES = ["/settings", "/prospecting", "/leads", "/landing", "/campaigns", "/inbox"];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (
