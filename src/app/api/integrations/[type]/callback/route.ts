@@ -73,18 +73,35 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
       ? new Date(Date.now() + tokenData!.expires_in * 1000).toISOString()
       : null;
 
-    await supabaseServer.from("integrations").upsert(
-      {
-        user_id: state,
-        type,
-        access_token: tokenData!.access_token,
-        refresh_token: tokenData!.refresh_token || null,
-        expires_at: expiresAt,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,type" }
-    );
+    const record = {
+      user_id: state!,
+      type,
+      access_token: tokenData!.access_token,
+      refresh_token: tokenData!.refresh_token || null,
+      expires_at: expiresAt,
+      is_active: true,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: existing } = await supabaseServer
+      .from("integrations")
+      .select("id")
+      .eq("user_id", state!)
+      .eq("type", type)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabaseServer
+        .from("integrations")
+        .update(record)
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseServer
+        .from("integrations")
+        .insert(record);
+      if (error) throw new Error(error.message);
+    }
   } catch (err) {
     console.error("OAuth callback error:", err);
     redirect("/settings/integrations?error=callback_error");
