@@ -16,6 +16,7 @@ import {
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { waHref, buildWaMessage } from "@/lib/wa-link";
+import { CustomFieldsSection, type FieldDefinition } from "@/components/app/custom-fields/custom-fields-section";
 
 interface Company {
   id: string;
@@ -34,6 +35,7 @@ interface Company {
   facebook: string | null;
   linkedin: string | null;
   notes: string | null;
+  custom_fields: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -60,16 +62,18 @@ export default function CompanyDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<Company>>({});
+  const [customFieldDefs, setCustomFieldDefs] = useState<FieldDefinition[]>([]);
 
   useEffect(() => {
-    fetch(`/api/companies/${id}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setCompany(data);
-        setForm(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/companies/${id}`).then((r) => r.json()),
+      fetch("/api/settings/fields?object_type=company").then((r) => r.json()),
+    ]).then(([companyData, fieldsData]) => {
+      setCompany(companyData);
+      setForm(companyData);
+      setCustomFieldDefs(Array.isArray(fieldsData) ? fieldsData : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, [id]);
 
   async function handleSave() {
@@ -369,6 +373,22 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {customFieldDefs.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Campos personalizados</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <CustomFieldsSection
+                fields={customFieldDefs}
+                values={(form.custom_fields as Record<string, unknown>) ?? {}}
+                editing={editing}
+                onChange={(vals) => setForm({ ...form, custom_fields: vals })}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <p className="text-xs text-muted-foreground">
         Creada el {new Date(company.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}

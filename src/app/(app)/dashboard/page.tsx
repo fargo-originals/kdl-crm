@@ -2,188 +2,272 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSupabaseServer } from "@/lib/supabase-server";
 import { getSession } from "@/lib/auth/session";
-import { Users, Building2, DollarSign, Ticket, TrendingUp, Clock } from "lucide-react";
+import { Users, Building2, DollarSign, Ticket, TrendingUp, Clock, Mail, Target } from "lucide-react";
+import Link from "next/link";
 
-function hasGlobalCrmAccess(role?: string) {
+function hasGlobalAccess(role?: string) {
   return role === "owner" || role === "admin";
 }
 
-interface Activity {
-  id: string;
-  subject: string;
-  type: string;
-  created_at: string;
+function formatEur(value: number) {
+  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(value);
 }
 
-async function getStats(session: Awaited<ReturnType<typeof getSession>>) {
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+}
+
+async function getData(session: Awaited<ReturnType<typeof getSession>>) {
   const supabase = getSupabaseServer();
-  const scoped = !hasGlobalCrmAccess(session?.role);
+  const scoped = !hasGlobalAccess(session?.role);
+  const userId = session?.sub;
 
-  let contactsQuery = supabase.from("contacts").select("*", { count: "exact", head: true });
-  let companiesQuery = supabase.from("companies").select("*", { count: "exact", head: true });
-  let dealsQuery = supabase.from("deals").select("*", { count: "exact", head: true });
-  let ticketsQuery = supabase.from("tickets").select("*", { count: "exact", head: true }).eq("status", "open");
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
 
-  if (scoped && session) {
-    contactsQuery = contactsQuery.eq("owner_id", session.sub);
-    companiesQuery = companiesQuery.eq("owner_id", session.sub);
-    dealsQuery = dealsQuery.eq("owner_id", session.sub);
-    ticketsQuery = ticketsQuery.or(`assignee_id.eq.${session.sub},reporter_id.eq.${session.sub}`);
-  }
-
-  const [contactsCount, companiesCount, dealsCount, ticketsCount] = await Promise.all([
-    contactsQuery,
-    companiesQuery,
-    dealsQuery,
-    ticketsQuery,
+  const [
+    contactsRes, companiesRes, dealsRes, ticketsRes,
+    pipelineRes, stagesRes,
+    leadsRes, campaignsRes, activitiesRes,
+  ] = await Promise.all([
+    supabase.from("contacts").select("*", { count: "exact", head: true })
+      .eq(scoped ? "owner_id" : "id", scoped ? userId! : "id"),
+    supabase.from("companies").select("*", { count: "exact", head: true })
+      .eq(scoped ? "owner_id" : "id", scoped ? userId! : "id"),
+    supabase.from("deals").select("value, stage")
+      .eq(scoped ? "owner_id" : "id", scoped ? userId! : "id"),
+    supabase.from("tickets").select("*", { count: "exact", head: true }).eq("status", "open"),
+    supabase.from("deals").select("stage, value")
+      .eq(scoped ? "owner_id" : "id", scoped ? userId! : "id"),
+    supabase.from("pipeline_stages").select("name, color, position, is_won, is_lost").order("position"),
+    supabase.from("lead_inquiries").select("status, created_at")
+      .gte("created_at", weekAgo.toISOString()),
+    supabase.from("email_campaigns")
+      .select("id, name, status, sent_count, opened_count, clicked_count, sent_at, created_at")
+      .order("created_at", { ascending: false }).limit(3),
+    supabase.from("activities")
+      .select("id, subject, type, created_at, user:users(first_name, last_name)")
+      .order("created_at", { ascending: false }).limit(5),
   ]);
 
-  return {
-    contacts: contactsCount.count || 0,
-    companies: companiesCount.count || 0,
-    deals: dealsCount.count || 0,
-    tickets: ticketsCount.count || 0,
-  };
-}
+  const deals = dealsRes.data ?? [];
+  const pipelineDeals = pipelineRes.data ?? [];
+  const stages = stagesRes.data ?? [];
 
-async function getRecentActivities(session: Awaited<ReturnType<typeof getSession>>) {
-  const supabase = getSupabaseServer();
-  let query = supabase
-    .from("activities")
-    .select("*, user:users(first_name, last_name)")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const pipelineTotal = deals.filter(d => !stages.find(s => s.name === d.stage)?.is_won && !stages.find(s => s.name === d.stage)?.is_lost)
+    .reduce((sum, d) => sum + (Number(d.value) || 0), 0);
 
-  if (!hasGlobalCrmAccess(session?.role) && session) {
-    query = query.eq("user_id", session.sub);
-  }
+  const leadsByStatus = (leadsRes.data ?? []).reduce<Record<string, number>>((acc, l) => {
+    acc[l.status] = (acc[l.status] ?? 0) + 1;
+    return acc;
+  }, {});
+  const leadsThisWeek = (leadsRes.data ?? []).length;
 
-  const { data } = await query;
-  return data || [];
-}
-
-async function getPipelineData(session: Awaited<ReturnType<typeof getSession>>) {
-  const supabase = getSupabaseServer();
-  let query = supabase
-    .from("deals")
-    .select("stage, value")
-    .order("created_at", { ascending: false });
-
-  if (!hasGlobalCrmAccess(session?.role) && session) {
-    query = query.eq("owner_id", session.sub);
-  }
-
-  const { data } = await query;
-
-  const stages = ["New", "Qualified", "Meeting", "Proposal", "Negotiation", "Closed Won"];
-  const result = stages.map((stage) => ({
-    stage,
-    count: 0,
-    value: 0,
-  }));
-
-  data?.forEach((deal) => {
-    const idx = stages.indexOf(deal.stage);
-    if (idx >= 0) {
-      result[idx].count++;
-      result[idx].value += Number(deal.value) || 0;
-    }
+  // Pipeline by real stage
+  const stageData = stages.map((s) => {
+    const stageDeals = pipelineDeals.filter(d => d.stage === s.name);
+    return {
+      name: s.name,
+      color: s.color ?? "#64748b",
+      count: stageDeals.length,
+      value: stageDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+      is_won: s.is_won,
+      is_lost: s.is_lost,
+    };
   });
+  const totalDealsCount = pipelineDeals.length || 1;
 
-  return result;
-}
+  const leadStatuses = [
+    { key: "new", label: "Nuevos", color: "bg-blue-100 text-blue-700" },
+    { key: "contacted", label: "Contactados", color: "bg-yellow-100 text-yellow-700" },
+    { key: "qualified", label: "Cualificados", color: "bg-purple-100 text-purple-700" },
+    { key: "scheduled", label: "Agendados", color: "bg-green-100 text-green-700" },
+    { key: "won", label: "Ganados", color: "bg-emerald-100 text-emerald-700" },
+    { key: "lost", label: "Perdidos", color: "bg-red-100 text-red-700" },
+  ];
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-  }).format(value);
+  const won = leadsByStatus["won"] ?? 0;
+  const lost = leadsByStatus["lost"] ?? 0;
+  const conversionRate = won + lost > 0 ? Math.round((won / (won + lost)) * 100) : null;
+
+  return {
+    contacts: contactsRes.count ?? 0,
+    companies: companiesRes.count ?? 0,
+    dealsCount: deals.length,
+    ticketsOpen: ticketsRes.count ?? 0,
+    pipelineTotal,
+    leadsThisWeek,
+    stageData,
+    leadsByStatus,
+    leadStatuses,
+    conversionRate,
+    campaigns: campaignsRes.data ?? [],
+    activities: activitiesRes.data ?? [],
+  };
 }
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const stats = await getStats(session);
-  const activities = await getRecentActivities(session);
-  const pipeline = await getPipelineData(session);
+  const d = await getData(session);
 
-  const statsData = [
-    { title: "Contactos", value: stats.contacts.toString(), icon: Users, change: "0%" },
-    { title: "Empresas", value: stats.companies.toString(), icon: Building2, change: "0%" },
-    { title: "Deals Activos", value: stats.deals.toString(), icon: DollarSign, change: "0%" },
-    { title: "Tickets Abiertos", value: stats.tickets.toString(), icon: Ticket, change: "0%" },
+  const kpis = [
+    { title: "Contactos", value: d.contacts, icon: Users },
+    { title: "Empresas", value: d.companies, icon: Building2 },
+    { title: "Deals activos", value: d.dealsCount, icon: DollarSign },
+    { title: "Tickets abiertos", value: d.ticketsOpen, icon: Ticket },
+    { title: "Pipeline total", value: formatEur(d.pipelineTotal), icon: TrendingUp },
+    { title: "Leads esta semana", value: d.leadsThisWeek, icon: Target },
   ];
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Bienvenido, {session?.email}</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">Bienvenido, {session?.email}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statsData.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+      {/* KPI cards */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+        {kpis.map((kpi) => (
+          <Card key={kpi.title}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-xs font-medium text-muted-foreground">{kpi.title}</CardTitle>
+              <kpi.icon className="h-3.5 w-3.5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <TrendingUp className="h-3 w-3 text-success" />
-                {stat.change} vs mes anterior
-              </p>
+              <div className="text-xl font-bold">{kpi.value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Pipeline por stages reales */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Pipeline</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {d.stageData.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sin etapas configuradas</p>
+            ) : (
+              d.stageData.map((stage) => (
+                <div key={stage.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: stage.color }} />
+                      <span>{stage.name}</span>
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0">{stage.count}</Badge>
+                    </div>
+                    <span className="text-muted-foreground font-medium">{formatEur(stage.value)}</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.round((stage.count / d.stageData.reduce((s, st) => s + st.count, 0) || 1) * 100)}%`,
+                        backgroundColor: stage.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Leads funnel */}
         <Card>
           <CardHeader>
-            <CardTitle>Actividad Reciente</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Leads esta semana</CardTitle>
+              {d.conversionRate !== null && (
+                <span className="text-xs text-muted-foreground">
+                  Conversión: <span className="font-medium text-foreground">{d.conversionRate}%</span>
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {activities.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No hay actividad reciente</p>
-              ) : (
-                activities.map((activity: Activity) => (
-                  <div key={activity.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div>
-                      <p className="font-medium">{activity.subject}</p>
-                      <p className="text-sm text-muted-foreground">{activity.type}</p>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {new Date(activity.created_at).toLocaleDateString("es-ES")}
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="grid grid-cols-2 gap-2">
+              {d.leadStatuses.map((s) => (
+                <div key={s.key} className={`rounded-md px-3 py-2 ${s.color}`}>
+                  <p className="text-lg font-bold">{d.leadsByStatus[s.key] ?? 0}</p>
+                  <p className="text-xs">{s.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 text-right">
+              <Link href="/leads" className="text-xs text-primary hover:underline">Ver todos los leads →</Link>
             </div>
           </CardContent>
         </Card>
 
+        {/* Últimas campañas */}
         <Card>
-          <CardHeader>
-            <CardTitle>Estado del Pipeline</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Últimas campañas</CardTitle>
+            <Link href="/campaigns" className="text-xs text-primary hover:underline">Ver todas →</Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {pipeline.map((stage) => (
-                <div key={stage.stage} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{stage.count}</Badge>
-                    <span className="text-sm">{stage.stage}</span>
-                  </div>
-                  <span className="text-sm font-medium">{formatCurrency(stage.value)}</span>
-                </div>
-              ))}
-            </div>
+            {d.campaigns.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay campañas todavía</p>
+            ) : (
+              <div className="space-y-3">
+                {d.campaigns.map((c) => {
+                  const openRate = c.sent_count > 0 ? Math.round((c.opened_count / c.sent_count) * 100) : 0;
+                  const clickRate = c.sent_count > 0 ? Math.round((c.clicked_count / c.sent_count) * 100) : 0;
+                  return (
+                    <div key={c.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+                      <div>
+                        <p className="text-sm font-medium line-clamp-1">{c.name}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                          <Mail className="h-3 w-3" />
+                          <span>{c.sent_count} enviados</span>
+                          {c.sent_count > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="text-green-600 font-medium">{openRate}% abiertos</span>
+                              {clickRate > 0 && <><span>·</span><span>{clickRate}% clics</span></>}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Badge variant={c.status === "sent" ? "success" : c.status === "draft" ? "secondary" : "warning"} className="text-xs shrink-0">
+                        {c.status}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Actividad reciente */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">Actividad reciente</CardTitle></CardHeader>
+          <CardContent>
+            {d.activities.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No hay actividad reciente</p>
+            ) : (
+              <div className="space-y-3">
+                {d.activities.map((a) => {
+                  const user = a.user as { first_name?: string; last_name?: string } | null;
+                  return (
+                    <div key={a.id} className="flex items-start justify-between gap-2 border-b pb-3 last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium line-clamp-1">{a.subject}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {a.type}{user ? ` · ${user.first_name} ${user.last_name}` : ""}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />{formatDate(a.created_at)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

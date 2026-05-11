@@ -14,6 +14,9 @@ export const users = pgTable('users', {
   emailVerified: boolean('email_verified').notNull().default(false),
   lastLoginAt: timestamp('last_login_at'),
   notificationPreferences: jsonb('notification_preferences'),
+  bookingSlug: text('booking_slug').unique(),
+  bookingTitle: text('booking_title'),
+  slotDurationMinutes: integer('slot_duration_minutes').default(30),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -35,6 +38,7 @@ export const companies = pgTable('companies', {
   facebook: text('facebook'),
   linkedin: text('linkedin'),
   notes: text('notes'),
+  customFields: jsonb('custom_fields').default({}),
   ownerId: uuid('owner_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -244,6 +248,19 @@ export const emailCampaignEvents = pgTable('email_campaign_events', {
   recipientId: uuid('recipient_id').references(() => emailCampaignRecipients.id),
   type: text('type').notNull(),
   metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const customFieldDefinitions = pgTable('custom_field_definitions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: uuid('owner_id').references(() => users.id),
+  objectType: text('object_type').notNull(), // 'contact' | 'company'
+  name: text('name').notNull(),
+  label: text('label').notNull(),
+  fieldType: text('field_type').notNull(), // 'text' | 'number' | 'date' | 'select' | 'checkbox'
+  options: jsonb('options').notNull().default([]),
+  position: integer('position').notNull().default(0),
+  isRequired: boolean('is_required').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ const emptyForm = {
 };
 
 export default function ContactsPage() {
+  const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
@@ -170,6 +172,7 @@ export default function ContactsPage() {
                 <div
                   key={contact.id}
                   className="flex items-center justify-between py-4 hover:bg-accent/50 cursor-pointer rounded-md px-2"
+                  onClick={() => router.push(`/contacts/${contact.id}`)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
@@ -191,7 +194,7 @@ export default function ContactsPage() {
                     <Badge variant={lifecycleColors[contact.lifecycle_stage] || "default"}>
                       {lifecycleLabels[contact.lifecycle_stage] || contact.lifecycle_stage}
                     </Badge>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       {contact.email && (
                         <Button variant="ghost" size="icon" asChild>
                           <a href={`mailto:${contact.email}`}>
