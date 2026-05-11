@@ -1,12 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Ticket,
   CheckSquare, Settings, Radar, LogOut, Inbox, Globe, Upload, Menu, X, Mail, MailOpen,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
@@ -57,6 +58,31 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
   );
 }
 
+function BookingButton() {
+  const [slug, setSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings/availability")
+      .then(r => r.json())
+      .then(d => setSlug(d.booking_slug ?? null))
+      .catch(() => {});
+  }, []);
+
+  if (!slug) return null;
+
+  return (
+    <a
+      href={`/book/${slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+    >
+      <CalendarDays className="h-4 w-4 shrink-0" />
+      Mi página de reservas
+    </a>
+  );
+}
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -79,7 +105,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             <NavLinks pathname={pathname} />
           </nav>
-          <div className="border-t p-4">
+          <div className="border-t p-4 space-y-1">
+            <BookingButton />
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -114,7 +141,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
           </nav>
-          <div className="border-t p-4">
+          <div className="border-t p-4 space-y-1">
+            <BookingButton />
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
