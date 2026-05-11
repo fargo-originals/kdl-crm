@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
+import { waHref, buildWaMessage } from "@/lib/wa-link";
 
 interface Company {
   id: string;
@@ -50,13 +51,6 @@ function ensureHttps(url: string | null | undefined): string | null {
   return url.startsWith("http") ? url : `https://${url}`;
 }
 
-function whatsappHref(phone: string | null): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return null;
-  const normalized = digits.startsWith("34") ? digits : digits.startsWith("6") || digits.startsWith("7") ? `34${digits}` : digits;
-  return `https://wa.me/${normalized}`;
-}
 
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -142,7 +136,7 @@ export default function CompanyDetailPage() {
     </div>
   );
 
-  const wa = whatsappHref(company.phone);
+  const wa = waHref(company.phone, buildWaMessage(company.name, !!company.website));
   const websiteUrl = ensureHttps(company.website);
   const instagramUrl = company.instagram
     ? ensureHttps(company.instagram.startsWith("http") ? company.instagram : `instagram.com/${company.instagram.replace(/^@/, "")}`)

@@ -31,7 +31,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const body = await req.json();
 
-  const allowed = ["name", "domain", "industry", "size", "revenue", "address", "city", "country", "phone", "website", "instagram", "facebook", "linkedin", "notes"];
+  const allowed = ["name", "domain", "industry", "size", "revenue", "address", "city", "country", "phone", "email", "website", "instagram", "facebook", "linkedin", "notes"];
   const updates = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)));
 
   let query = supabaseServer

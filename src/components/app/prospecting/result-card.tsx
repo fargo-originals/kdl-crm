@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EnrichmentBadge } from "@/components/app/prospecting/enrichment-badge";
 import { classifyWebsite } from "@/lib/prospecting/classify-website";
+import { waHref, buildWaMessage } from "@/lib/wa-link";
 import type { ProspectResult } from "@/components/app/prospecting/types";
 
 type ResultCardProps = {
@@ -20,6 +21,7 @@ export function ResultCard({ result, selected, onSelect, onReview }: ResultCardP
   const approved = result.review_status === "approved";
   const discarded = result.review_status === "discarded";
   const web = classifyWebsite(result.website);
+  const wa = waHref(result.phone, buildWaMessage(result.name, web.presence === "real_website"));
 
   return (
     <div className={`relative flex flex-col rounded-lg border bg-card text-sm transition-colors ${
@@ -83,9 +85,16 @@ export function ResultCard({ result, selected, onSelect, onReview }: ResultCardP
         {/* Contact */}
         <div className="space-y-1">
           {result.phone && (
-            <a href={`tel:${result.phone}`} className="flex items-center gap-1.5 text-[11px] hover:text-primary truncate">
-              <Phone className="h-3 w-3 shrink-0" />{result.phone}
-            </a>
+            <div className="flex items-center gap-1.5">
+              <a href={`tel:${result.phone}`} className="flex items-center gap-1 text-[11px] hover:text-primary truncate min-w-0">
+                <Phone className="h-3 w-3 shrink-0" />{result.phone}
+              </a>
+              {wa && (
+                <a href={wa} target="_blank" rel="noreferrer" className="text-green-600 hover:text-green-700 shrink-0">
+                  <FaWhatsapp className="h-3 w-3" />
+                </a>
+              )}
+            </div>
           )}
           {result.email && (
             <a href={`mailto:${result.email}`} className="flex items-center gap-1.5 text-[11px] hover:text-primary truncate">

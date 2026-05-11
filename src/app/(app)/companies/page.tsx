@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Search, Globe, MapPin, Users, Phone, ExternalLink, X } from "lucide-react";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
+import { waHref, buildWaMessage } from "@/lib/wa-link";
 
 interface Company {
   id: string;
@@ -33,14 +34,6 @@ interface Company {
 interface Filters {
   industries: string[];
   neighborhoods: string[];
-}
-
-function waHref(phone: string | null): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return null;
-  const normalized = digits.startsWith("34") ? digits : (digits.startsWith("6") || digits.startsWith("7")) ? `34${digits}` : digits;
-  return `https://wa.me/${normalized}`;
 }
 
 function ensureHttps(url: string | null | undefined): string | null {
@@ -199,7 +192,7 @@ export default function CompaniesPage() {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {companies.map((company) => {
-            const wa = waHref(company.phone);
+            const wa = waHref(company.phone, buildWaMessage(company.name, !!company.website));
             const ig = instagramUrl(company.instagram);
             const fb = ensureHttps(company.facebook);
             const li = ensureHttps(company.linkedin);
