@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { MessageCircle, Mail, Phone, Bot, User } from 'lucide-react';
+import { MessageCircle, Mail, Phone, Bot, User, CalendarPlus } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/spinner';
+import { CalendarEventModal } from '@/components/app/calendar-event-modal';
 
 interface Lead {
   id: string;
@@ -61,6 +62,7 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [sessions, setSessions] = useState<AgentSession[]>([]);
   const [saving, setSaving] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/leads/${id}`).then(r => r.json()).then(setLead);
@@ -114,6 +116,14 @@ export default function LeadDetailPage() {
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[lead.status] ?? 'bg-muted'}`}>
             {lead.status}
           </span>
+          <button
+            onClick={() => setCalendarOpen(true)}
+            className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+            title="Crear evento en Google Calendar"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" />
+            Agendar
+          </button>
           <button onClick={() => router.back()} className="rounded-md border px-4 py-2 text-sm hover:bg-accent">
             ← Volver
           </button>
@@ -244,6 +254,14 @@ export default function LeadDetailPage() {
           El agente IA aún no ha iniciado conversación con este lead.
         </div>
       )}
+
+      <CalendarEventModal
+        open={calendarOpen}
+        onClose={() => setCalendarOpen(false)}
+        defaultTitle={`Reunión con ${lead.full_name}`}
+        defaultEmail={lead.email ?? ""}
+        leadId={id}
+      />
     </div>
   );
 }
