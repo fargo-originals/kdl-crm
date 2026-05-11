@@ -26,7 +26,11 @@
       "Bash(mkdir -p \"C:\\\\PROYECTOS\\\\skills\\\\the-architect\\\\kdl-crm\\\\.claude\\\\worktrees\\\\tender-lumiere-da0244\\\\src\\\\app\\\\api\\\\inbox\\\\[id]\\\\reply\")",
       "Bash(mkdir -p \"C:\\\\PROYECTOS\\\\skills\\\\the-architect\\\\kdl-crm\\\\.claude\\\\worktrees\\\\tender-lumiere-da0244\\\\src\\\\app\\\\api\\\\settings\\\\scoring\\\\[id]\")",
       "Bash(pnpm tsc *)",
-      "Bash(git merge *)"
+      "Bash(git merge *)",
+      "mcp__11774a47-79ea-4127-8b8e-b0055ff469b1__list_teams",
+      "mcp__11774a47-79ea-4127-8b8e-b0055ff469b1__list_projects",
+      "mcp__11774a47-79ea-4127-8b8e-b0055ff469b1__get_deployment_build_logs",
+      "mcp__11774a47-79ea-4127-8b8e-b0055ff469b1__deploy_to_vercel"
     ]
   }
 }
