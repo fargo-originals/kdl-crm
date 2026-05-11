@@ -11,8 +11,9 @@ import { Select } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, DollarSign, User } from "lucide-react";
+import { Plus, DollarSign, User, CalendarPlus } from "lucide-react";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
+import { CalendarEventModal } from "@/components/app/calendar-event-modal";
 interface Deal {
   id: string;
   name: string;
@@ -50,6 +51,7 @@ export default function DealsPage() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [calendarDeal, setCalendarDeal] = useState<Deal | null>(null);
 
   const loadDeals = useCallback(async () => {
     setLoading(true);
@@ -170,12 +172,22 @@ export default function DealsPage() {
                                     <DollarSign className="h-3 w-3" />
                                     {formatCurrency(Number(deal.value))}
                                   </span>
-                                  {deal.owner && (
-                                    <span className="flex items-center gap-0.5">
-                                      <User className="h-3 w-3" />
-                                      {deal.owner.first_name} {deal.owner.last_name?.[0]}.
-                                    </span>
-                                  )}
+                                  <div className="flex items-center gap-1.5">
+                                    {deal.owner && (
+                                      <span className="flex items-center gap-0.5">
+                                        <User className="h-3 w-3" />
+                                        {deal.owner.first_name} {deal.owner.last_name?.[0]}.
+                                      </span>
+                                    )}
+                                    <button
+                                      onMouseDown={e => e.stopPropagation()}
+                                      onClick={e => { e.stopPropagation(); setCalendarDeal(deal); }}
+                                      className="text-muted-foreground hover:text-primary transition-colors"
+                                      title="Crear evento en Calendar"
+                                    >
+                                      <CalendarPlus className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -241,6 +253,14 @@ export default function DealsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {calendarDeal && (
+        <CalendarEventModal
+          open={!!calendarDeal}
+          onClose={() => setCalendarDeal(null)}
+          defaultTitle={`Reunión: ${calendarDeal.company?.name ?? calendarDeal.name}`}
+          dealId={calendarDeal.id}
+        />
+      )}
     </div>
   );
 }
