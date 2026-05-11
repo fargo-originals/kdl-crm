@@ -264,5 +264,39 @@ export const customFieldDefinitions = pgTable('custom_field_definitions', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const inboxMessages = pgTable('inbox_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  gmailId: text('gmail_id').notNull(),
+  threadId: text('thread_id'),
+  fromEmail: text('from_email'),
+  fromName: text('from_name'),
+  toEmails: text('to_emails').array().default([]),
+  subject: text('subject'),
+  snippet: text('snippet'),
+  bodyHtml: text('body_html'),
+  bodyText: text('body_text'),
+  isRead: boolean('is_read').default(false),
+  receivedAt: timestamp('received_at'),
+  contactId: uuid('contact_id').references(() => contacts.id),
+  companyId: uuid('company_id').references(() => companies.id),
+  dealId: uuid('deal_id').references(() => deals.id),
+  labels: text('labels').array().default([]),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const scoringRules = pgTable('scoring_rules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: uuid('owner_id').references(() => users.id).notNull(),
+  name: text('name').notNull(),
+  objectType: text('object_type').notNull().default('lead'), // 'lead' | 'contact'
+  field: text('field').notNull(),
+  operator: text('operator').notNull(), // 'equals' | 'not_equals' | 'contains' | 'is_set' | 'is_not_set'
+  value: text('value'),
+  points: integer('points').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 export * from './landing';
 export * from './agents';

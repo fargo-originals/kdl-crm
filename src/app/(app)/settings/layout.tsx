@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { User, Users, GitBranch, Plug, Database, Bell, Shield, SlidersHorizontal, CalendarClock } from "lucide-react";
+import { User, Users, GitBranch, Plug, Database, Bell, Shield, SlidersHorizontal, CalendarClock, Star } from "lucide-react";
 
 const settingsNav = [
   { name: "Perfil", href: "/settings/profile", icon: User },
@@ -8,6 +8,7 @@ const settingsNav = [
   { name: "Pipeline", href: "/settings/pipeline", icon: GitBranch },
   { name: "Campos", href: "/settings/fields", icon: SlidersHorizontal },
   { name: "Disponibilidad", href: "/settings/availability", icon: CalendarClock },
+  { name: "Lead Scoring", href: "/settings/scoring", icon: Star },
   { name: "Integraciones", href: "/settings/integrations", icon: Plug },
   { name: "Importar Datos", href: "/settings/import", icon: Database },
   { name: "Notificaciones", href: "/settings/notifications", icon: Bell },

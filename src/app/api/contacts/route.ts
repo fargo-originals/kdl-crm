@@ -2,19 +2,27 @@ import { getSession } from "@/lib/auth/session";
 import { CreateContactSchema } from "@/lib/crm/schemas";
 import { supabaseServer } from "@/lib/supabase-server";
 import { validateJsonBody } from "@/lib/validation";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const emailFilter = searchParams.get("email");
+  const limit = Number(searchParams.get("limit") ?? 200);
 
   let query = supabaseServer
     .from("contacts")
     .select("*, company:companies(name)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (session.role !== "owner" && session.role !== "admin") {
     query = query.eq("owner_id", session.sub);
+  }
+  if (emailFilter) {
+    query = query.ilike("email", emailFilter);
   }
 
   const { data, error } = await query;

@@ -20,7 +20,12 @@
       "Bash(git add *)",
       "Bash(git commit -m 'feat: add create modals, drag & drop pipeline, fix team users, service role API routes *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(git checkout *)",
+      "Bash(mkdir -p \"C:\\\\PROYECTOS\\\\skills\\\\the-architect\\\\kdl-crm\\\\.claude\\\\worktrees\\\\tender-lumiere-da0244\\\\src\\\\app\\\\api\\\\inbox\\\\[id]\\\\reply\")",
+      "Bash(mkdir -p \"C:\\\\PROYECTOS\\\\skills\\\\the-architect\\\\kdl-crm\\\\.claude\\\\worktrees\\\\tender-lumiere-da0244\\\\src\\\\app\\\\api\\\\settings\\\\scoring\\\\[id]\")",
+      "Bash(pnpm tsc *)"
     ]
   }
 }

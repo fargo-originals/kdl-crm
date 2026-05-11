@@ -138,6 +138,7 @@ export const leadInquiries = pgTable('lead_inquiries', {
   assignedTo: uuid('assigned_to').references(() => users.id),
   agentSessionId: uuid('agent_session_id'),
   qualificationData: jsonb('qualification_data').default({}),
+  score: integer('score').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
