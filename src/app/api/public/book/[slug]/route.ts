@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
 import { sendEmail } from '@/lib/agents/providers/email';
+import { createCalendarEvent } from '@/lib/google-calendar/client';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -78,13 +79,35 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Sync to Google Calendar (non-blocking)
+  const agentName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
+  createCalendarEvent(user.id, {
+    summary: `${user.booking_title ?? 'Consulta'} con ${visitor_name}`,
+    description: [
+      `Cliente: ${visitor_name}`,
+      `Email: ${visitor_email}`,
+      visitor_phone ? `Teléfono: ${visitor_phone}` : null,
+      message ? `\nMensaje: ${message}` : null,
+    ].filter(Boolean).join('\n'),
+    startIso: slotDate.toISOString(),
+    durationMinutes: user.slot_duration_minutes ?? 30,
+    attendeeEmail: visitor_email,
+  }).then(eventId => {
+    if (eventId) {
+      supabaseServer
+        .from('appointments')
+        .update({ google_event_id: eventId })
+        .eq('id', appt.id)
+        .then(() => {});
+    }
+  }).catch(console.error);
+
   // Send confirmation email to visitor
   const slotFormatted = slotDate.toLocaleString('es-ES', {
     weekday: 'long', day: 'numeric', month: 'long',
     hour: '2-digit', minute: '2-digit',
     timeZone: 'Europe/Madrid',
   });
-  const agentName = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
 
   const html = `
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px">
