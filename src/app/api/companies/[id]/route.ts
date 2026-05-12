@@ -46,5 +46,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { data, error } = await query.select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Sync email to prospect_results so campaigns can see the updated address
+  if (updates.email !== undefined) {
+    await supabaseServer
+      .from("prospect_results")
+      .update({ email: updates.email || null })
+      .eq("imported_company_id", id);
+  }
+
   return NextResponse.json(data);
 }
