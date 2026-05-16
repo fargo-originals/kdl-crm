@@ -3,6 +3,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { verifyPassword } from '@/lib/auth/password';
 import { signToken, COOKIE } from '@/lib/auth/jwt';
 import { SignJWT } from 'jose';
+import { writeAudit } from '@/lib/audit';
 
 const secret = () => new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret-min-32-chars-padding!!');
 
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
   }
 
   // ── Normal login ───────────────────────────────────────────────────────────
+  writeAudit({ entityType: 'user', entityId: user.id, action: 'login', changedBy: user.id });
   const token = await signToken({ sub: user.id, role: user.role, email: user.email });
 
   const response = NextResponse.json({ ok: true });
