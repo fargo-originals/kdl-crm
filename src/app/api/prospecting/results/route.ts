@@ -8,6 +8,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const sector = searchParams.get('sector');
+  const neighborhood = searchParams.get('neighborhood');
   const hasEmail = searchParams.get('hasEmail') === 'true';
   const webFilter = searchParams.get('web'); // 'none' | 'has' | null (todos)
   const limit = Math.min(500, parseInt(searchParams.get('limit') ?? '300'));
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
     .order('google_review_count', { ascending: false })
     .limit(limit);
 
+  if (neighborhood) query = query.eq('neighborhood', neighborhood);
   if (hasEmail) query = query.not('email', 'is', null).neq('email', '');
   if (webFilter === 'none') query = query.or('website.is.null,website.eq.');
   if (webFilter === 'has') query = query.not('website', 'is', null).neq('website', '');

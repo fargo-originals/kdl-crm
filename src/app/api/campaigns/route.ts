@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
   }
 
-  const { name, sector, tono, templateType, subject, bodyHtml } = parsed.data;
+  const { name, sector, neighborhood, tono, templateType, subject, bodyHtml } = parsed.data;
 
   // Si se manda templateType pero no bodyHtml propio, generar preview con vars demo
   let finalBodyHtml = bodyHtml;
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
       user_id: dbUserId,
       name,
       sector,
+      neighborhood: neighborhood ?? null,
       tono,
       template_type: templateType,
       subject,
