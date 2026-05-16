@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { User, Users, GitBranch, Plug, Database, Bell, Shield, SlidersHorizontal, CalendarClock, Star, Zap, ListOrdered } from "lucide-react";
+import { User, Users, GitBranch, Plug, Database, Bell, Shield, SlidersHorizontal, CalendarClock, Star, Zap, ListOrdered, ClipboardList } from "lucide-react";
 
 const settingsNav = [
   { name: "Perfil", href: "/settings/profile", icon: User },
@@ -15,6 +15,7 @@ const settingsNav = [
   { name: "Importar Datos", href: "/settings/import", icon: Database },
   { name: "Notificaciones", href: "/settings/notifications", icon: Bell },
   { name: "Seguridad", href: "/settings/security", icon: Shield },
+  { name: "Audit Log", href: "/settings/audit", icon: ClipboardList },
 ];
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {

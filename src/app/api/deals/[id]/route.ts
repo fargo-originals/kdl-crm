@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { validateJsonBody } from "@/lib/validation";
 import { NextResponse } from "next/server";
 import { runAutomation } from "@/lib/automations/engine";
+import { writeAudit } from "@/lib/audit";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -47,6 +48,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       value: data.value,
     }, data.owner_id ?? session.sub).catch(console.error);
   }
+
+  // Audit log
+  writeAudit({
+    entityType: 'deal',
+    entityId: id,
+    action: 'update',
+    changedBy: session.sub,
+    oldValues: prevDeal ? { stage: prevDeal.stage, value: prevDeal.value } : undefined,
+    newValues: validated.data as Record<string, unknown>,
+  });
 
   return NextResponse.json(data);
 }

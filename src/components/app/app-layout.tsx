@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Ticket,
   CheckSquare, Settings, Radar, LogOut, Inbox, Globe, Upload, Menu, X, Mail, MailOpen,
-  CalendarDays, BarChart2,
+  CalendarDays, BarChart2, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
@@ -18,6 +18,7 @@ const navigation = [
   { name: "Contactos", href: "/contacts", icon: Users },
   { name: "Empresas", href: "/companies", icon: Building2 },
   { name: "Pipeline", href: "/deals", icon: DollarSign },
+  { name: "Presupuestos", href: "/quotes", icon: FileText },
   { name: "Reportes", href: "/reports", icon: BarChart2 },
   { name: "Prospeccion", href: "/prospecting", icon: Radar },
   { name: "Importar Apify", href: "/prospecting/import", icon: Upload },
