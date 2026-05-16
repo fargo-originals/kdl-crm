@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { supabaseServer } from '@/lib/supabase-server';
 import { notify } from '@/lib/notifications';
+import { runAutomation } from '@/lib/automations/engine';
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -33,6 +34,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       body: `La cita con ${lead.full_name} ha sido confirmada.`,
       data: { appointmentId: id },
     }).catch(console.error);
+
+    // Fire appointment_confirmed automation (non-blocking)
+    runAutomation('appointment_confirmed', id, {
+      full_name: lead.full_name,
+      email: lead.email,
+    }, lead.assigned_to).catch(console.error);
   }
 
   return NextResponse.json({ ok: true });

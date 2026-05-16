@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyWhatsAppWebhook, parseWhatsAppWebhook } from '@/lib/agents/providers/whatsapp';
 import { runAgent } from '@/lib/agents';
 import { supabaseServer } from '@/lib/supabase-server';
+import { pauseEnrollmentsForContact } from '@/lib/cadences/engine';
 
 // Webhook verification (GET)
 export async function GET(req: NextRequest) {
@@ -40,6 +41,14 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (!session) return NextResponse.json({ ok: true });
+
+  // Pause any active cadence enrollments for this contact (non-blocking)
+  const { data: lead } = await supabaseServer
+    .from('lead_inquiries')
+    .select('id')
+    .eq('phone', inbound.from)
+    .maybeSingle();
+  if (lead?.id) pauseEnrollmentsForContact(lead.id, null).catch(console.error);
 
   await runAgent(session.id, inbound.text);
   return NextResponse.json({ ok: true });
