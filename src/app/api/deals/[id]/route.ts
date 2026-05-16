@@ -3,6 +3,7 @@ import { UpdateDealSchema } from "@/lib/crm/schemas";
 import { supabaseServer } from "@/lib/supabase-server";
 import { validateJsonBody } from "@/lib/validation";
 import { NextResponse } from "next/server";
+import { runAutomation } from "@/lib/automations/engine";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -11,6 +12,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const validated = await validateJsonBody(req, UpdateDealSchema);
   if ('response' in validated) return validated.response;
+
+  // Fetch previous stage for automation context
+  const { data: prevDeal } = await supabaseServer
+    .from("deals")
+    .select("stage, name, value, owner_id")
+    .eq("id", id)
+    .single();
 
   const updatePayload = {
     ...validated.data,
@@ -29,5 +37,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { data, error } = await query.select().single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Fire deal_stage_change automation if stage changed (non-blocking)
+  if (prevDeal && validated.data.stage && validated.data.stage !== prevDeal.stage) {
+    runAutomation('deal_stage_change', id, {
+      deal_name: data.name,
+      stage: data.stage,
+      previous_stage: prevDeal.stage,
+      value: data.value,
+    }, data.owner_id ?? session.sub).catch(console.error);
+  }
+
   return NextResponse.json(data);
 }

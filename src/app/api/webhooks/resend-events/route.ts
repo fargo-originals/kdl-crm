@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { runAutomation } from '@/lib/automations/engine';
 
 // Resend envía el header "svix-signature" (o "resend-signature")
 // para verificar autenticidad. Si RESEND_WEBHOOK_SECRET está configurado, validamos.
@@ -102,6 +103,19 @@ export async function POST(req: Request) {
     await supabaseServer.rpc('increment_campaign_clicked', { campaign_id: recipient.campaign_id });
   } else if (newStatus === 'bounced') {
     await supabaseServer.rpc('increment_campaign_bounced', { campaign_id: recipient.campaign_id });
+  }
+
+  // Fire campaign_opened automation (non-blocking)
+  if (newStatus === 'opened') {
+    const { data: campaign } = await supabaseServer
+      .from('email_campaigns')
+      .select('user_id')
+      .eq('id', recipient.campaign_id)
+      .single();
+
+    if (campaign?.user_id) {
+      runAutomation('campaign_opened', recipient.id, { email }, campaign.user_id).catch(console.error);
+    }
   }
 
   return NextResponse.json({ ok: true });

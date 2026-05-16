@@ -3,6 +3,7 @@ import { LeadInquirySchema } from '@/lib/landing/schemas';
 import { supabaseServer } from '@/lib/supabase-server';
 import { enqueueAgentRun } from '@/lib/agents';
 import { notify } from '@/lib/notifications';
+import { runAutomation } from '@/lib/automations/engine';
 
 export async function POST(req: NextRequest) {
   // CORS
@@ -80,6 +81,17 @@ export async function POST(req: NextRequest) {
   if (error) {
     console.error('Lead insert error:', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  }
+
+  // Fire lead_created automation (non-blocking)
+  if (lead && assignedTo) {
+    runAutomation('lead_created', lead.id, {
+      full_name: data.fullName,
+      email: data.email,
+      phone: data.phone ?? undefined,
+      business_name: data.businessName ?? undefined,
+      status: 'new',
+    }, assignedTo).catch(console.error);
   }
 
   // Log activity
