@@ -49,7 +49,7 @@ Soy Felipe, de Kento Dev Lab, y monto webs para negocios como el vuestro. Una we
 ¿Te interesa que te enseñe en 15 min cómo quedaría la vuestra?
 
 Un saludo,
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -67,7 +67,7 @@ Soy Felipe, de Kento Dev Lab. Hago webs en Next.js con SEO local incluido (899 �
 ¿Te puedo enviar un ejemplo y comentamos en una llamada de 15 min si encaja?
 
 Un saludo,
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -85,7 +85,7 @@ Soy Felipe, de Kento Dev Lab. Por 1.499 € entregamos web profesional en Next.j
 ¿Tiene 20 minutos esta semana para una llamada en la que le enseñe ejemplos y hablemos de su clínica?
 
 Un cordial saludo,
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -103,7 +103,7 @@ Soy Felipe, de Kento Dev Lab. Trabajamos con hoteles boutique en Madrid construy
 ¿Le interesaría una llamada de 20 minutos para que le enseñe casos concretos y veamos si tiene sentido para ${v.businessName}?
 
 Un cordial saludo,
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -127,7 +127,7 @@ Cualquiera de las 3 te está costando clientes. Te las arreglo en una web nueva 
 Si quieres que te lo cuente en 15 min, responde aquí y acordamos.
 
 Un saludo,
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -145,7 +145,7 @@ La gente que descubre la zona y busca dónde ${v.sector === 'restaurantes' ? 'co
 ¿Llamamos 15 min para que te enseñe cómo lo hacemos?
 
 Un saludo,
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -161,7 +161,7 @@ Te he escrito un par de veces y entiendo que no es prioridad ahora. Sin problema
 Cierro tu ficha por mi parte. Si en algún momento queréis renovar la web o queréis que os haga una auditoría gratis, escríbeme y lo retomamos.
 
 Mucha suerte con ${v.businessName},
-Felipe Díaz, CEO de Kento Dev Lab`;
+Felipe Díaz, fundador de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
