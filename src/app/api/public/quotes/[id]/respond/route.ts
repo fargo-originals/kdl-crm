@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { fireWebhook } from '@/lib/webhooks';
 
 /** Public endpoint — client accepts or rejects a quote. No auth required. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +13,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { data: quote } = await supabaseServer
     .from('quotes')
-    .select('status')
+    .select('status, owner_id, number, total')
     .eq('id', id)
     .single();
 
@@ -29,6 +30,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     .from('quotes')
     .update({ status: newStatus, updated_at: new Date().toISOString() })
     .eq('id', id);
+
+  // Fire webhook
+  if (quote.owner_id) {
+    const event = action === 'accept' ? 'quote.accepted' : 'quote.rejected';
+    fireWebhook(event, quote.owner_id, { quote_id: id, number: quote.number, total: quote.total });
+  }
 
   return NextResponse.json({ ok: true, status: newStatus });
 }

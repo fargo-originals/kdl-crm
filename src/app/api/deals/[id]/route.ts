@@ -5,6 +5,7 @@ import { validateJsonBody } from "@/lib/validation";
 import { NextResponse } from "next/server";
 import { runAutomation } from "@/lib/automations/engine";
 import { writeAudit } from "@/lib/audit";
+import { fireWebhook } from "@/lib/webhooks";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -47,6 +48,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       previous_stage: prevDeal.stage,
       value: data.value,
     }, data.owner_id ?? session.sub).catch(console.error);
+  }
+
+  // Webhooks for stage change
+  if (prevDeal && validated.data.stage && validated.data.stage !== prevDeal.stage) {
+    const ownerId = data.owner_id ?? session.sub;
+    fireWebhook('deal.stage_changed', ownerId, {
+      deal_id: id, deal_name: data.name,
+      from_stage: prevDeal.stage, to_stage: data.stage, value: data.value,
+    });
+    // Check if moved to a won stage
+    const { data: stages } = await supabaseServer.from('pipeline_stages').select('name, is_won').eq('name', data.stage).limit(1);
+    if (stages?.[0]?.is_won) {
+      fireWebhook('deal.won', ownerId, { deal_id: id, deal_name: data.name, value: data.value });
+    }
   }
 
   // Audit log

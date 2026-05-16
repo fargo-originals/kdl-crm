@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { MessageCircle, Mail, Phone, Bot, User, CalendarPlus } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/spinner';
 import { CalendarEventModal } from '@/components/app/calendar-event-modal';
+import { ActivityTimeline } from '@/components/app/activity-timeline';
 
 interface Lead {
   id: string;
@@ -254,6 +255,11 @@ export default function LeadDetailPage() {
           El agente IA aún no ha iniciado conversación con este lead.
         </div>
       )}
+
+      {/* Activity Timeline */}
+      <div className="rounded-lg border bg-card p-4">
+        <ActivityTimeline filter={{ lead_id: id }} />
+      </div>
 
       <CalendarEventModal
         open={calendarOpen}
