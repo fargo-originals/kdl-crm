@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { isMobilePhone } from '@/lib/wa-link';
+
+type Channel = 'email' | 'whatsapp';
 
 interface Prospect {
   id: string;
@@ -41,7 +44,9 @@ interface Stats {
 }
 
 interface SelectedRecipient {
-  email: string;
+  email?: string | null;
+  phone?: string | null;
+  channel: Channel;
   contactId?: string;
   variables: {
     firstName?: string;
@@ -116,6 +121,7 @@ type SourceTab = 'prospects' | 'crm';
 export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, onClose }: Props) {
   const queryClient = useQueryClient();
   const [source, setSource] = useState<SourceTab>('prospects');
+  const [channel, setChannel] = useState<Channel>('email');
   const [search, setSearch] = useState('');
   const [crmSearch, setCrmSearch] = useState('');
   const [webFilter, setWebFilter] = useState<WebFilter>('all');
@@ -155,78 +161,87 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
     );
   });
 
-  const selectedEmails = new Set(selected.map(s => s.email));
+  // Identificador único: email para canal email, phone para WA
+  const selectedKeys = new Set(selected.map(s => s.channel === 'whatsapp' ? s.phone : s.email));
+
+  function prospectVars(p: Prospect) {
+    return {
+      firstName: p.contact_name ?? p.name.split(' ')[0] ?? '',
+      businessName: p.name,
+      neighborhood: p.neighborhood ?? '',
+      rating: String(p.google_rating ?? ''),
+      reviewCount: String(p.google_review_count ?? 0),
+      websiteUrl: p.website ?? '',
+      category: p.category ?? '',
+    };
+  }
 
   function toggleProspect(p: Prospect) {
-    if (!p.email) return;
-    if (selectedEmails.has(p.email)) {
-      setSelected(prev => prev.filter(s => s.email !== p.email));
+    if (channel === 'whatsapp') {
+      if (!p.phone || !isMobilePhone(p.phone)) return;
+      if (selectedKeys.has(p.phone)) {
+        setSelected(prev => prev.filter(s => s.phone !== p.phone));
+      } else {
+        setSelected(prev => [...prev, { phone: p.phone, channel: 'whatsapp', variables: prospectVars(p) }]);
+      }
     } else {
-      setSelected(prev => [...prev, {
-        email: p.email!,
-        variables: {
-          firstName: p.contact_name ?? p.name.split(' ')[0] ?? '',
-          businessName: p.name,
-          neighborhood: p.neighborhood ?? '',
-          rating: String(p.google_rating ?? ''),
-          reviewCount: String(p.google_review_count ?? 0),
-          websiteUrl: p.website ?? '',
-          category: p.category ?? '',
-        },
-      }]);
+      if (!p.email) return;
+      if (selectedKeys.has(p.email)) {
+        setSelected(prev => prev.filter(s => s.email !== p.email));
+      } else {
+        setSelected(prev => [...prev, { email: p.email, channel: 'email', variables: prospectVars(p) }]);
+      }
     }
   }
 
+  function crmVars(c: CrmCompany) {
+    return {
+      firstName: c.name.split(' ')[0] ?? '',
+      businessName: c.name,
+      neighborhood: c.city ?? '',
+      rating: '',
+      reviewCount: '0',
+      websiteUrl: c.website ?? '',
+      category: c.industry ?? '',
+    };
+  }
+
   function toggleCrmCompany(c: CrmCompany) {
-    if (!c.email) return;
-    if (selectedEmails.has(c.email)) {
-      setSelected(prev => prev.filter(s => s.email !== c.email));
+    if (channel === 'whatsapp') {
+      if (!c.phone || !isMobilePhone(c.phone)) return;
+      if (selectedKeys.has(c.phone)) {
+        setSelected(prev => prev.filter(s => s.phone !== c.phone));
+      } else {
+        setSelected(prev => [...prev, { phone: c.phone, channel: 'whatsapp', variables: crmVars(c) }]);
+      }
     } else {
-      setSelected(prev => [...prev, {
-        email: c.email!,
-        variables: {
-          firstName: c.name.split(' ')[0] ?? '',
-          businessName: c.name,
-          neighborhood: c.city ?? '',
-          rating: '',
-          reviewCount: '0',
-          websiteUrl: c.website ?? '',
-          category: c.industry ?? '',
-        },
-      }]);
+      if (!c.email) return;
+      if (selectedKeys.has(c.email)) {
+        setSelected(prev => prev.filter(s => s.email !== c.email));
+      } else {
+        setSelected(prev => [...prev, { email: c.email, channel: 'email', variables: crmVars(c) }]);
+      }
     }
   }
 
   function selectAllVisible() {
     if (source === 'crm') {
-      const toAdd = crmCompanies.filter(c => c.email && !selectedEmails.has(c.email!));
-      setSelected(prev => [...prev, ...toAdd.map(c => ({
-        email: c.email!,
-        variables: {
-          firstName: c.name.split(' ')[0] ?? '',
-          businessName: c.name,
-          neighborhood: c.city ?? '',
-          rating: '',
-          reviewCount: '0',
-          websiteUrl: c.website ?? '',
-          category: c.industry ?? '',
-        },
-      }))]);
+      if (channel === 'whatsapp') {
+        const toAdd = crmCompanies.filter(c => c.phone && isMobilePhone(c.phone) && !selectedKeys.has(c.phone));
+        setSelected(prev => [...prev, ...toAdd.map(c => ({ phone: c.phone!, channel: 'whatsapp' as Channel, variables: crmVars(c) }))]);
+      } else {
+        const toAdd = crmCompanies.filter(c => c.email && !selectedKeys.has(c.email));
+        setSelected(prev => [...prev, ...toAdd.map(c => ({ email: c.email!, channel: 'email' as Channel, variables: crmVars(c) }))]);
+      }
       return;
     }
-    const toAdd = filtered.filter(p => p.email && !selectedEmails.has(p.email!));
-    setSelected(prev => [...prev, ...toAdd.map(p => ({
-      email: p.email!,
-      variables: {
-        firstName: p.contact_name ?? p.name.split(' ')[0] ?? '',
-        businessName: p.name,
-        neighborhood: p.neighborhood ?? '',
-        rating: String(p.google_rating ?? ''),
-        reviewCount: String(p.google_review_count ?? 0),
-        websiteUrl: p.website ?? '',
-        category: p.category ?? '',
-      },
-    }))]);
+    if (channel === 'whatsapp') {
+      const toAdd = filtered.filter(p => p.phone && isMobilePhone(p.phone) && !selectedKeys.has(p.phone!));
+      setSelected(prev => [...prev, ...toAdd.map(p => ({ phone: p.phone!, channel: 'whatsapp' as Channel, variables: prospectVars(p) }))]);
+    } else {
+      const toAdd = filtered.filter(p => p.email && !selectedKeys.has(p.email));
+      setSelected(prev => [...prev, ...toAdd.map(p => ({ email: p.email!, channel: 'email' as Channel, variables: prospectVars(p) }))]);
+    }
   }
 
   const WEB_FILTERS: { id: WebFilter; label: string }[] = [
@@ -240,13 +255,27 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
     { id: 'crm', label: 'Empresas CRM' },
   ];
 
+  const CHANNEL_TABS: { id: Channel; label: string; icon: React.ReactNode }[] = [
+    { id: 'email', label: 'Email', icon: <Mail className="h-3.5 w-3.5" /> },
+    { id: 'whatsapp', label: 'WhatsApp', icon: <MessageCircle className="h-3.5 w-3.5" /> },
+  ];
+
+  // Conteos según canal activo
+  const waCount = source === 'prospects'
+    ? filtered.filter(p => p.phone && isMobilePhone(p.phone)).length
+    : crmCompanies.filter(c => c.phone && isMobilePhone(c.phone)).length;
+  const emailCount = source === 'prospects'
+    ? filtered.filter(p => p.email).length
+    : crmCompanies.filter(c => c.email).length;
+  const availableCount = channel === 'whatsapp' ? waCount : emailCount;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-lg">Seleccionar destinatarios</h3>
           <p className="text-sm text-muted-foreground">
-            Solo se pueden añadir empresas que tienen email.
+            Elige el canal y selecciona los contactos.
           </p>
         </div>
         {onClose && (
@@ -254,6 +283,31 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
             <X className="h-5 w-5" />
           </button>
         )}
+      </div>
+
+      {/* Canal: Email / WhatsApp */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex rounded-md border overflow-hidden">
+          {CHANNEL_TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => { setChannel(t.id); setSelected([]); }}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium transition-colors',
+                channel === t.id
+                  ? t.id === 'whatsapp' ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted'
+              )}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {channel === 'whatsapp'
+            ? 'Se añaden contactos con móvil español (6xx / 7xx)'
+            : 'Se añaden contactos con dirección de email'}
+        </span>
       </div>
 
       {/* Tabs de fuente */}
@@ -283,10 +337,10 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
               <Mail className="h-3 w-3" /> Con email
             </p>
           </div>
-          <div className="rounded-lg border bg-muted/50 px-3 py-2">
-            <p className="text-lg font-bold text-muted-foreground">{stats.phoneOnly}</p>
-            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-0.5">
-              <Phone className="h-3 w-3" /> Solo teléfono
+          <div className={cn('rounded-lg border px-3 py-2', channel === 'whatsapp' ? 'bg-green-50' : 'bg-muted/50')}>
+            <p className={cn('text-lg font-bold', channel === 'whatsapp' ? 'text-green-700' : 'text-muted-foreground')}>{stats.phoneOnly}</p>
+            <p className={cn('text-xs flex items-center justify-center gap-1 mt-0.5', channel === 'whatsapp' ? 'text-green-600' : 'text-muted-foreground')}>
+              <MessageCircle className="h-3 w-3" /> WhatsApp
             </p>
           </div>
           <div className="rounded-lg border bg-orange-50 px-3 py-2">
@@ -299,7 +353,7 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
       )}
 
       {/* Filtros de prospección */}
-      {source === 'prospects' && (
+      {source === 'prospects' && channel === 'email' && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex rounded-md border overflow-hidden">
             {WEB_FILTERS.map(f => (
@@ -334,12 +388,8 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
-              {source === 'crm' ? (
-                <span>{crmCompanies.length} empresa{crmCompanies.length !== 1 ? 's' : ''} con email</span>
-              ) : (
-                <span>{filtered.filter(p => p.email).length} con email disponible</span>
-              )}
-              {(source === 'crm' ? crmCompanies.length > 0 : filtered.some(p => p.email)) && (
+              <span>{availableCount} {channel === 'whatsapp' ? 'con WhatsApp' : 'con email'} disponible{availableCount !== 1 ? 's' : ''}</span>
+              {availableCount > 0 && (
                 <button onClick={selectAllVisible} className="text-xs text-primary hover:underline font-normal">
                   Añadir todos
                 </button>
@@ -381,13 +431,17 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
               ) : (
                 <div className="max-h-80 overflow-auto divide-y">
                   {crmCompanies.map(c => {
-                    const isSelected = selectedEmails.has(c.email!);
+                    const crmKey = channel === 'whatsapp' ? c.phone : c.email;
+                    const canSelectCrm = channel === 'whatsapp' ? !!(c.phone && isMobilePhone(c.phone)) : !!c.email;
+                    const isSelected = !!(crmKey && selectedKeys.has(crmKey));
                     return (
                       <button
                         key={c.id}
                         onClick={() => toggleCrmCompany(c)}
+                        disabled={!canSelectCrm}
                         className={cn(
-                          'w-full text-left px-4 py-2.5 transition-colors flex items-start gap-3 hover:bg-muted/40',
+                          'w-full text-left px-4 py-2.5 transition-colors flex items-start gap-3',
+                          canSelectCrm ? 'hover:bg-muted/40' : 'opacity-40 cursor-not-allowed',
                           isSelected && 'opacity-40'
                         )}
                       >
@@ -395,17 +449,22 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
                           <p className="font-medium text-sm truncate">{c.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             {c.city && <span className="text-xs text-muted-foreground">{c.city}</span>}
-                            {c.industry && <span className="text-xs text-muted-foreground">{c.industry}</span>}
                             {c.website
                               ? <Globe className="h-3 w-3 text-blue-400" />
                               : <GlobeOff className="h-3 w-3 text-orange-400" />}
-                            <Mail className="h-3 w-3 text-green-600" />
+                            {channel === 'whatsapp'
+                              ? <MessageCircle className="h-3 w-3 text-green-600" />
+                              : <Mail className="h-3 w-3 text-blue-500" />}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{c.email}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {channel === 'whatsapp' ? c.phone : c.email}
+                          </p>
                         </div>
                         {isSelected
                           ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                          : <UserPlus className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />}
+                          : canSelectCrm
+                          ? <UserPlus className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+                          : null}
                       </button>
                     );
                   })}
@@ -423,16 +482,19 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
             ) : (
               <div className="max-h-80 overflow-auto divide-y">
                 {filtered.map(p => {
-                  const hasEmail = !!p.email;
-                  const isSelected = hasEmail && selectedEmails.has(p.email!);
+                  const canSelect = channel === 'whatsapp'
+                    ? !!(p.phone && isMobilePhone(p.phone))
+                    : !!p.email;
+                  const key = channel === 'whatsapp' ? p.phone : p.email;
+                  const isSelected = canSelect && selectedKeys.has(key!);
                   return (
                     <button
                       key={p.id}
                       onClick={() => toggleProspect(p)}
-                      disabled={!hasEmail}
+                      disabled={!canSelect}
                       className={cn(
                         'w-full text-left px-4 py-2.5 transition-colors flex items-start gap-3',
-                        hasEmail ? 'hover:bg-muted/40' : 'opacity-40 cursor-not-allowed',
+                        canSelect ? 'hover:bg-muted/40' : 'opacity-40 cursor-not-allowed',
                         isSelected && 'opacity-40'
                       )}
                     >
@@ -452,10 +514,13 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
                             : <GlobeOff className="h-3 w-3 text-orange-400" />}
                           {channelIcon(p)}
                         </div>
+                        {channel === 'whatsapp' && p.phone && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{p.phone}</p>
+                        )}
                       </div>
                       {isSelected
                         ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                        : hasEmail
+                        : canSelect
                         ? <UserPlus className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
                         : null}
                     </button>
@@ -486,32 +551,40 @@ export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, o
               </div>
             ) : (
               <div className="max-h-80 overflow-auto divide-y">
-                {selected.map(r => (
-                  <div key={r.email} className="px-4 py-2.5 flex items-center gap-3">
+                {selected.map((r, i) => {
+                  const contact = r.channel === 'whatsapp' ? r.phone : r.email;
+                  return (
+                  <div key={contact ?? i} className="px-4 py-2.5 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{r.variables.businessName ?? r.email}</p>
-                      <p className="text-xs text-muted-foreground">{r.email}</p>
-                      {r.variables.websiteUrl
-                        ? <span className="text-xs text-blue-500 flex items-center gap-1"><Globe className="h-3 w-3" /> Con web</span>
-                        : <span className="text-xs text-orange-500 flex items-center gap-1"><GlobeOff className="h-3 w-3" /> Sin web</span>}
+                      <p className="font-medium text-sm truncate">{r.variables.businessName ?? contact}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        {r.channel === 'whatsapp'
+                          ? <><MessageCircle className="h-3 w-3 text-green-600" />{contact}</>
+                          : <><Mail className="h-3 w-3 text-blue-500" />{contact}</>}
+                      </p>
                     </div>
-                    <button onClick={() => setSelected(prev => prev.filter(s => s.email !== r.email))}
+                    <button onClick={() => setSelected(prev => prev.filter((_, j) => j !== i))}
                       className="text-muted-foreground hover:text-destructive">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Aviso sobre teléfono-solo — solo en prospección */}
-      {source === 'prospects' && stats.phoneOnly > 0 && (
+      {/* Aviso cruzado según canal */}
+      {source === 'prospects' && channel === 'email' && stats.phoneOnly > 0 && (
         <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-          <strong>{stats.phoneOnly} empresas</strong> solo tienen teléfono fijo o WhatsApp — no se pueden incluir en campañas de email.
-          Para contactarlas por WhatsApp, usa el módulo de Prospección directamente.
+          <strong>{stats.phoneOnly} contactos</strong> solo tienen móvil — cámbiate al canal <strong>WhatsApp</strong> para añadirlos.
+        </p>
+      )}
+      {source === 'prospects' && channel === 'whatsapp' && stats.withEmail > 0 && waCount < stats.withEmail && (
+        <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+          Algunos contactos solo tienen email — cámbiate al canal <strong>Email</strong> para añadirlos.
         </p>
       )}
 

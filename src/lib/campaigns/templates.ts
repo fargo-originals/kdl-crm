@@ -171,6 +171,7 @@ Felipe Díaz, fundador de Kento Dev Lab`;
 // ── Router público ─────────────────────────────────────────────────────────────
 
 type TemplateType = 'email_1_first_contact' | 'email_2_follow_up' | 'email_3_breakup';
+export type WaTemplateType = 'wa_1_first_contact' | 'wa_2_follow_up' | 'wa_3_breakup';
 type Sector = 'restaurantes' | 'cafeterias' | 'peluquerias' | 'fisioterapia' | 'dentistas' | 'hoteles';
 
 export function renderTemplate(
@@ -190,6 +191,39 @@ export function renderTemplate(
   if (sector === 'fisioterapia') return email1Fisioterapia(vars);
   return email1Hosteleria(vars); // restaurantes, cafeterias, peluquerias
 }
+
+// ── WhatsApp templates ────────────────────────────────────────────────────────
+
+export function renderWaTemplate(
+  type: WaTemplateType,
+  vars: TemplateVars,
+): string {
+  const name = vars.firstName || 'hola';
+  const biz = vars.businessName || 'vuestro negocio';
+  const zone = vars.neighborhood || 'tu zona';
+  const stars = vars.rating ? `${vars.rating}★` : '';
+  const reviews = vars.reviewCount && vars.reviewCount !== '0' ? ` con ${vars.reviewCount} reseñas` : '';
+  const webLine = vars.websiteUrl
+    ? `vuestra web no está bien posicionada en móvil y los clientes no encuentran dónde reservar`
+    : `no aparece web vuestra — la gente que os busca en Google se va sin contactar`;
+
+  if (type === 'wa_3_breakup') {
+    return `Hola ${name}, te escribí un par de veces sobre ${biz}. Lo entiendo, no es el momento.\n\nSi en algún momento queréis renovar la web o necesitáis ayuda digital, aquí estoy.\n\nSuerte 🙌\nFelipe Díaz — Kento Dev Lab`;
+  }
+
+  if (type === 'wa_2_follow_up') {
+    return `Hola ${name} 👋 Te escribí la semana pasada sobre ${biz}.\n\nRápido: encontré 3 cosas que os están costando clientes ahora mismo — web lenta, sin botón de reserva visible y sin SEO local en ${zone}.\n\nOs lo arreglo por 499€ en 7 días.\n\n¿5 minutos para que os lo cuente?\nFelipe — kentodevlab.com`;
+  }
+
+  // wa_1_first_contact
+  return `Hola ${name} 👋 soy Felipe de Kento Dev Lab.\n\nVi ${biz} en ${zone} — ${stars}${reviews} en Google, muy buena reputación.\n\nEl detalle: ${webLine}.\n\nOs hago una web con reservas y SEO local desde 499€, lista en 7 días.\n\n¿Te cuento en 5 min cómo quedaría?`;
+}
+
+export const WA_TEMPLATE_LABELS: Record<WaTemplateType, string> = {
+  wa_1_first_contact: 'WhatsApp 1 — Primer contacto (Día 0)',
+  wa_2_follow_up: 'WhatsApp 2 — Follow-up (Día 7)',
+  wa_3_breakup: 'WhatsApp 3 — Cierre (Día 14)',
+};
 
 export const SECTOR_LABELS: Record<string, string> = Object.fromEntries(
   SECTORS.map(s => [s.id, s.label])
