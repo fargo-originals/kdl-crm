@@ -61,8 +61,13 @@ async function saveRecipients(campaignId: string, recipients: SelectedRecipient[
     body: JSON.stringify({ recipients }),
   });
   if (!res.ok) {
-    const json = await res.json();
-    throw new Error(json.error ?? 'Error al guardar');
+    const json = await res.json().catch(() => ({}));
+    const errMsg = typeof json.error === 'string'
+      ? json.error
+      : json.error
+        ? JSON.stringify(json.error)
+        : `Error ${res.status} al guardar destinatarios`;
+    throw new Error(errMsg);
   }
   return res.json();
 }
