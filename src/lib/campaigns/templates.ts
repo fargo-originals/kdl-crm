@@ -1,3 +1,5 @@
+import { SECTORS } from '@/lib/prospecting/sectors';
+
 export interface TemplateVars {
   firstName: string;
   businessName: string;
@@ -191,14 +193,9 @@ export function renderTemplate(
   return email1Hosteleria(vars); // restaurantes, cafeterias, peluquerias
 }
 
-export const SECTOR_LABELS: Record<Sector, string> = {
-  restaurantes: 'Restaurantes',
-  cafeterias: 'Cafeterías',
-  peluquerias: 'Peluquerías',
-  fisioterapia: 'Fisioterapia',
-  dentistas: 'Dentistas',
-  hoteles: 'Hoteles',
-};
+export const SECTOR_LABELS: Record<string, string> = Object.fromEntries(
+  SECTORS.map(s => [s.id, s.label])
+);
 
 export const TEMPLATE_LABELS: Record<TemplateType, string> = {
   email_1_first_contact: 'Email 1 — Primer contacto (Día 0)',
