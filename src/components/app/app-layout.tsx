@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, Building2, DollarSign, Ticket,
   CheckSquare, Settings, Radar, LogOut, Inbox, Globe, Upload, Menu, X, Mail, MailOpen,
-  CalendarDays,
+  CalendarDays, BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
@@ -18,6 +18,7 @@ const navigation = [
   { name: "Contactos", href: "/contacts", icon: Users },
   { name: "Empresas", href: "/companies", icon: Building2 },
   { name: "Pipeline", href: "/deals", icon: DollarSign },
+  { name: "Reportes", href: "/reports", icon: BarChart2 },
   { name: "Prospeccion", href: "/prospecting", icon: Radar },
   { name: "Importar Apify", href: "/prospecting/import", icon: Upload },
   { name: "Bandeja", href: "/inbox", icon: MailOpen },
@@ -168,9 +169,36 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Link href="/dashboard" className="text-lg font-bold text-primary">KDL CRM</Link>
           </header>
 
-          <main className="flex-1 overflow-auto bg-background p-4 md:p-8">{children}</main>
+          {/* Extra bottom padding on mobile to avoid content behind bottom nav */}
+          <main className="flex-1 overflow-auto bg-background p-4 pb-20 md:pb-8 md:p-8">{children}</main>
         </div>
       </div>
+
+      {/* ── Mobile bottom navigation ─────────────────────────────── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-center justify-around border-t bg-card md:hidden">
+        {[
+          { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
+          { href: '/leads', icon: Inbox, label: 'Leads' },
+          { href: '/contacts', icon: Users, label: 'Contactos' },
+          { href: '/deals', icon: DollarSign, label: 'Pipeline' },
+          { href: '/settings', icon: Settings, label: 'Config' },
+        ].map(({ href, icon: Icon, label }) => {
+          const isActive = href === '/settings' ? pathname.startsWith('/settings') : pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex flex-col items-center gap-0.5 px-2 py-1 rounded-md text-xs transition-colors',
+                isActive ? 'text-primary' : 'text-muted-foreground',
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </QueryProvider>
   );
 }
