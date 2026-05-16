@@ -25,7 +25,8 @@ const integerRange = (min: number, max: number) => z.coerce.number().int().min(m
 
 export const ContactLifecycleStageSchema = z.enum(['lead', 'opportunity', 'customer', 'inactive']);
 export const ContactStatusSchema = z.enum(['active', 'inactive', 'archived']);
-export const DealStageSchema = z.enum(['New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost']);
+// Free-text stage — previously hardcoded enum, now accepts any stage name from dynamic pipelines
+export const DealStageSchema = z.string().trim().min(1, 'La etapa es obligatoria').max(100);
 export const CurrencySchema = z.enum(['EUR', 'USD', 'GBP']);
 export const TaskStatusSchema = z.enum(['todo', 'in_progress', 'done', 'cancelled']);
 export const TaskPrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
@@ -59,6 +60,7 @@ export const CreateDealSchema = z.object({
   name: requiredString('El nombre del deal', 160),
   company_id: uuidField,
   contact_id: uuidField,
+  pipeline_id: uuidField,
   stage: DealStageSchema,
   value: z.coerce
     .number()
