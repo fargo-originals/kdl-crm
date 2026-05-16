@@ -31,6 +31,7 @@
     "jose": "^6.2.3",
     "lucide-react": "^1.11.0",
     "next": "16.2.4",
+    "otplib": "^13.4.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-icons": "^5.6.0",
@@ -39,6 +40,9 @@
     "xlsx": "^0.18.5",
     "zod": "^4.4.2",
     "zustand": "^5.0.12"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp", "unrs-resolver"]
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

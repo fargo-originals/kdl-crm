@@ -22,10 +22,17 @@ export default function LoginPage() {
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await res.json();
+
     if (res.ok) {
-      router.push('/dashboard');
+      if (data.requires_two_factor && data.temp_token) {
+        // Store temp token in sessionStorage and redirect to 2FA page
+        sessionStorage.setItem('2fa_temp_token', data.temp_token);
+        router.push('/login/2fa');
+      } else {
+        router.push('/dashboard');
+      }
     } else {
-      const data = await res.json();
       setError(data.error ?? 'Error al iniciar sesión');
     }
     setLoading(false);
