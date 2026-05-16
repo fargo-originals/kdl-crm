@@ -22,6 +22,17 @@ interface Prospect {
   contact_name: string | null;
 }
 
+interface CrmCompany {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  city: string | null;
+  country: string | null;
+  industry: string | null;
+}
+
 interface Stats {
   total: number;
   withEmail: number;
@@ -44,6 +55,15 @@ interface SelectedRecipient {
 }
 
 type WebFilter = 'all' | 'none' | 'has';
+
+async function fetchCrmCompanies(search: string): Promise<CrmCompany[]> {
+  const params = new URLSearchParams({ hasEmail: 'true', limit: '300' });
+  if (search) params.set('search', search);
+  const res = await fetch(`/api/companies?${params}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
 
 async function fetchProspects(sector: string, webFilter: WebFilter): Promise<{ data: Prospect[]; stats: Stats }> {
   const params = new URLSearchParams({ sector, limit: '300' });
@@ -89,9 +109,13 @@ interface Props {
   onClose?: () => void;
 }
 
+type SourceTab = 'prospects' | 'crm';
+
 export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Props) {
   const queryClient = useQueryClient();
+  const [source, setSource] = useState<SourceTab>('prospects');
   const [search, setSearch] = useState('');
+  const [crmSearch, setCrmSearch] = useState('');
   const [webFilter, setWebFilter] = useState<WebFilter>('all');
   const [emailOnly, setEmailOnly] = useState(false);
   const [selected, setSelected] = useState<SelectedRecipient[]>([]);
@@ -99,6 +123,12 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
   const { data: result, isLoading } = useQuery({
     queryKey: ['prospects-selector', sector, webFilter],
     queryFn: () => fetchProspects(sector, webFilter),
+  });
+
+  const { data: crmCompanies = [], isLoading: crmLoading } = useQuery({
+    queryKey: ['crm-companies-selector', crmSearch],
+    queryFn: () => fetchCrmCompanies(crmSearch),
+    enabled: source === 'crm',
   });
 
   const prospects = result?.data ?? [];
@@ -126,7 +156,7 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
   const selectedEmails = new Set(selected.map(s => s.email));
 
   function toggleProspect(p: Prospect) {
-    if (!p.email) return; // solo se puede añadir los que tienen email por ahora
+    if (!p.email) return;
     if (selectedEmails.has(p.email)) {
       setSelected(prev => prev.filter(s => s.email !== p.email));
     } else {
@@ -145,7 +175,43 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
     }
   }
 
+  function toggleCrmCompany(c: CrmCompany) {
+    if (!c.email) return;
+    if (selectedEmails.has(c.email)) {
+      setSelected(prev => prev.filter(s => s.email !== c.email));
+    } else {
+      setSelected(prev => [...prev, {
+        email: c.email!,
+        variables: {
+          firstName: c.name.split(' ')[0] ?? '',
+          businessName: c.name,
+          neighborhood: c.city ?? '',
+          rating: '',
+          reviewCount: '0',
+          websiteUrl: c.website ?? '',
+          category: c.industry ?? '',
+        },
+      }]);
+    }
+  }
+
   function selectAllVisible() {
+    if (source === 'crm') {
+      const toAdd = crmCompanies.filter(c => c.email && !selectedEmails.has(c.email!));
+      setSelected(prev => [...prev, ...toAdd.map(c => ({
+        email: c.email!,
+        variables: {
+          firstName: c.name.split(' ')[0] ?? '',
+          businessName: c.name,
+          neighborhood: c.city ?? '',
+          rating: '',
+          reviewCount: '0',
+          websiteUrl: c.website ?? '',
+          category: c.industry ?? '',
+        },
+      }))]);
+      return;
+    }
     const toAdd = filtered.filter(p => p.email && !selectedEmails.has(p.email!));
     setSelected(prev => [...prev, ...toAdd.map(p => ({
       email: p.email!,
@@ -167,13 +233,18 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
     { id: 'has', label: 'Con web' },
   ];
 
+  const SOURCE_TABS: { id: SourceTab; label: string }[] = [
+    { id: 'prospects', label: 'Prospección' },
+    { id: 'crm', label: 'Empresas CRM' },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-lg">Seleccionar destinatarios</h3>
           <p className="text-sm text-muted-foreground">
-            Empresas aprobadas en prospección. Solo se pueden añadir las que tienen email.
+            Solo se pueden añadir empresas que tienen email.
           </p>
         </div>
         {onClose && (
@@ -183,8 +254,26 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
         )}
       </div>
 
-      {/* Stats de cobertura */}
-      {stats.total > 0 && (
+      {/* Tabs de fuente */}
+      <div className="flex rounded-md border overflow-hidden w-fit">
+        {SOURCE_TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setSource(t.id)}
+            className={cn(
+              'px-4 py-1.5 text-sm font-medium transition-colors',
+              source === t.id
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background text-muted-foreground hover:bg-muted'
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Stats de cobertura — solo para prospección */}
+      {source === 'prospects' && stats.total > 0 && (
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-lg border bg-green-50 px-3 py-2">
             <p className="text-lg font-bold text-green-700">{stats.withEmail}</p>
@@ -207,59 +296,120 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
         </div>
       )}
 
-      {/* Filtros */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex rounded-md border overflow-hidden">
-          {WEB_FILTERS.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setWebFilter(f.id)}
-              className={cn(
-                'px-3 py-1.5 text-sm font-medium transition-colors',
-                webFilter === f.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-background text-muted-foreground hover:bg-muted'
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+      {/* Filtros de prospección */}
+      {source === 'prospects' && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-md border overflow-hidden">
+            {WEB_FILTERS.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setWebFilter(f.id)}
+                className={cn(
+                  'px-3 py-1.5 text-sm font-medium transition-colors',
+                  webFilter === f.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-background text-muted-foreground hover:bg-muted'
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={emailOnly}
+              onChange={e => setEmailOnly(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            Solo con email
+          </label>
         </div>
-        <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={emailOnly}
-            onChange={e => setEmailOnly(e.target.checked)}
-            className="h-3.5 w-3.5"
-          />
-          Solo con email
-        </label>
-      </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Panel izquierdo — disponibles */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
-              <span>{filtered.filter(p => p.email).length} con email disponible</span>
-              {filtered.some(p => p.email) && (
+              {source === 'crm' ? (
+                <span>{crmCompanies.length} empresa{crmCompanies.length !== 1 ? 's' : ''} con email</span>
+              ) : (
+                <span>{filtered.filter(p => p.email).length} con email disponible</span>
+              )}
+              {(source === 'crm' ? crmCompanies.length > 0 : filtered.some(p => p.email)) && (
                 <button onClick={selectAllVisible} className="text-xs text-primary hover:underline font-normal">
                   Añadir todos
                 </button>
               )}
             </CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nombre o barrio..."
-                className="pl-8"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
+            {source === 'crm' ? (
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre..."
+                  className="pl-8"
+                  value={crmSearch}
+                  onChange={e => setCrmSearch(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nombre o barrio..."
+                  className="pl-8"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {source === 'crm' ? (
+              crmLoading ? (
+                <div className="flex justify-center py-8 gap-2 text-muted-foreground">
+                  <Spinner size="sm" /> Cargando...
+                </div>
+              ) : crmCompanies.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  No hay empresas en el CRM con email configurado.<br />
+                  Edita una empresa y añade su dirección de email.
+                </p>
+              ) : (
+                <div className="max-h-80 overflow-auto divide-y">
+                  {crmCompanies.map(c => {
+                    const isSelected = selectedEmails.has(c.email!);
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => toggleCrmCompany(c)}
+                        className={cn(
+                          'w-full text-left px-4 py-2.5 transition-colors flex items-start gap-3 hover:bg-muted/40',
+                          isSelected && 'opacity-40'
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{c.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {c.city && <span className="text-xs text-muted-foreground">{c.city}</span>}
+                            {c.industry && <span className="text-xs text-muted-foreground">{c.industry}</span>}
+                            {c.website
+                              ? <Globe className="h-3 w-3 text-blue-400" />
+                              : <GlobeOff className="h-3 w-3 text-orange-400" />}
+                            <Mail className="h-3 w-3 text-green-600" />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{c.email}</p>
+                        </div>
+                        {isSelected
+                          ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          : <UserPlus className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )
+            ) : isLoading ? (
               <div className="flex justify-center py-8 gap-2 text-muted-foreground">
                 <Spinner size="sm" /> Cargando...
               </div>
@@ -355,8 +505,8 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
         </Card>
       </div>
 
-      {/* Aviso sobre teléfono-solo */}
-      {stats.phoneOnly > 0 && (
+      {/* Aviso sobre teléfono-solo — solo en prospección */}
+      {source === 'prospects' && stats.phoneOnly > 0 && (
         <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
           <strong>{stats.phoneOnly} empresas</strong> solo tienen teléfono fijo o WhatsApp — no se pueden incluir en campañas de email.
           Para contactarlas por WhatsApp, usa el módulo de Prospección directamente.

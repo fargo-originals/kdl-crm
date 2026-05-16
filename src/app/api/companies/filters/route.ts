@@ -1,25 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { supabaseServer } from '@/lib/supabase-server';
+import { SECTORS } from '@/lib/prospecting/sectors';
 
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Sectores/industrias distintos de companies
-  const { data: industryRows } = await supabaseServer
-    .from('companies')
-    .select('industry')
-    .not('industry', 'is', null)
-    .neq('industry', '');
+  // Sectores: lista canónica de prospección (fuente de verdad)
+  const industries = SECTORS.map(s => ({ id: s.id, label: s.label }));
 
-  const industries = [...new Set((industryRows ?? []).map(r => r.industry).filter(Boolean))].sort();
-
-  // Barrios desde prospect_results (vía imported_company_id)
+  // Barrios: todos los de prospect_results (no solo los importados)
   const { data: neighborhoodRows } = await supabaseServer
     .from('prospect_results')
     .select('neighborhood')
-    .not('imported_company_id', 'is', null)
     .not('neighborhood', 'is', null)
     .neq('neighborhood', '');
 

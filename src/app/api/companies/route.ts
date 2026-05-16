@@ -10,6 +10,9 @@ export async function GET(req: Request) {
   const industry = searchParams.get("industry");
   const neighborhood = searchParams.get("neighborhood");
   const search = searchParams.get("search");
+  const hasEmail = searchParams.get("hasEmail") === "true";
+  const email = searchParams.get("email");
+  const limit = searchParams.get("limit");
 
   // Si filtra por barrio, obtener los company IDs vía prospect_results
   let neighborhoodCompanyIds: string[] | null = null;
@@ -38,6 +41,9 @@ export async function GET(req: Request) {
   if (industry) query = query.eq("industry", industry);
   if (neighborhoodCompanyIds) query = query.in("id", neighborhoodCompanyIds);
   if (search) query = query.ilike("name", `%${search}%`);
+  if (hasEmail) query = query.not("email", "is", null).neq("email", "");
+  if (email) query = query.ilike("email", `%${email}%`);
+  if (limit) query = query.limit(parseInt(limit));
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -31,8 +31,13 @@ interface Company {
   created_at: string;
 }
 
+interface FilterOption {
+  id: string;
+  label: string;
+}
+
 interface Filters {
-  industries: string[];
+  industries: FilterOption[];
   neighborhoods: string[];
 }
 
@@ -139,7 +144,7 @@ export default function CompaniesPage() {
 
         <Select value={industry} onChange={e => setIndustry(e.target.value)} className="w-52">
           <option value="">Todos los sectores</option>
-          {filters.industries.map(i => <option key={i} value={i}>{i}</option>)}
+          {filters.industries.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
         </Select>
 
         <Select value={neighborhood} onChange={e => setNeighborhood(e.target.value)} className="w-52">
