@@ -4,6 +4,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { enqueueAgentRun } from '@/lib/agents';
 import { notify } from '@/lib/notifications';
 import { runAutomation } from '@/lib/automations/engine';
+import { fireWebhook } from '@/lib/webhooks';
 
 export async function POST(req: NextRequest) {
   // CORS
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 
-  // Fire lead_created automation (non-blocking)
+  // Fire lead_created automation + webhook (non-blocking)
   if (lead && assignedTo) {
     runAutomation('lead_created', lead.id, {
       full_name: data.fullName,
@@ -92,6 +93,15 @@ export async function POST(req: NextRequest) {
       business_name: data.businessName ?? undefined,
       status: 'new',
     }, assignedTo).catch(console.error);
+
+    fireWebhook('lead.created', assignedTo, {
+      lead_id: lead.id,
+      full_name: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      business_name: data.businessName,
+      status: 'new',
+    });
   }
 
   // Log activity

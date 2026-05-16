@@ -13,6 +13,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { CustomFieldsSection, type FieldDefinition } from "@/components/app/custom-fields/custom-fields-section";
 import { waHref, buildWaMessage } from "@/lib/wa-link";
+import { ActivityTimeline } from "@/components/app/activity-timeline";
 
 interface Contact {
   id: string;
@@ -223,6 +224,13 @@ export default function ContactDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Activity Timeline */}
+      <Card>
+        <CardContent className="pt-4">
+          <ActivityTimeline filter={{ contact_id: id }} />
+        </CardContent>
+      </Card>
 
       <p className="text-xs text-muted-foreground">
         Creado el {new Date(contact.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}

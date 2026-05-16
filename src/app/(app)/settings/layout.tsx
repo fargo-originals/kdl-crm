@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { User, Users, GitBranch, Plug, Database, Bell, Shield, SlidersHorizontal, CalendarClock, Star, Zap, ListOrdered, ClipboardList } from "lucide-react";
+import { User, Users, GitBranch, Plug, Database, Bell, Shield, SlidersHorizontal, CalendarClock, Star, Zap, ListOrdered, ClipboardList, FileText, Webhook } from "lucide-react";
 
 const settingsNav = [
   { name: "Perfil", href: "/settings/profile", icon: User },
@@ -11,6 +11,8 @@ const settingsNav = [
   { name: "Lead Scoring", href: "/settings/scoring", icon: Star },
   { name: "Automatizaciones", href: "/settings/automations", icon: Zap },
   { name: "Cadencias", href: "/settings/cadences", icon: ListOrdered },
+  { name: "Plantillas", href: "/settings/templates", icon: FileText },
+  { name: "Webhooks", href: "/settings/webhooks", icon: Webhook },
   { name: "Integraciones", href: "/settings/integrations", icon: Plug },
   { name: "Importar Datos", href: "/settings/import", icon: Database },
   { name: "Notificaciones", href: "/settings/notifications", icon: Bell },
