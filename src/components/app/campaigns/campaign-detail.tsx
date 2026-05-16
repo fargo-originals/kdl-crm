@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Send, Users, Eye, Settings2, BarChart2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Users, Eye, Settings2, BarChart2, Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { RecipientSelector } from './recipient-selector';
 import { MetricsDashboard } from './metrics-dashboard';
-import { SECTOR_LABELS, TEMPLATE_LABELS } from '@/lib/campaigns/templates';
+import { SECTOR_LABELS, TEMPLATE_LABELS, renderWaTemplate } from '@/lib/campaigns/templates';
+import { waHref } from '@/lib/wa-link';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Borrador',
@@ -42,7 +43,9 @@ interface Campaign {
   opened_count: number;
   recipients: Array<{
     id: string;
-    email: string;
+    email: string | null;
+    phone: string | null;
+    channel: 'email' | 'whatsapp';
     status: string;
     sent_at: string | null;
     opened_at: string | null;
@@ -244,22 +247,44 @@ export function CampaignDetail({ campaignId }: Props) {
               </div>
             ) : (
               <div className="divide-y max-h-96 overflow-auto">
-                {campaign.recipients.map(r => (
+                {campaign.recipients.map(r => {
+                  const vars = (r.variables ?? {}) as Record<string, string>;
+                  const isWa = r.channel === 'whatsapp';
+                  const waMsg = isWa ? renderWaTemplate('wa_1_first_contact', {
+                    firstName: vars.firstName ?? '',
+                    businessName: vars.businessName ?? '',
+                    neighborhood: vars.neighborhood ?? '',
+                    rating: vars.rating ?? '',
+                    reviewCount: vars.reviewCount ?? '0',
+                    websiteUrl: vars.websiteUrl,
+                  }) : '';
+                  const waLink = isWa ? waHref(r.phone, waMsg) : null;
+                  return (
                   <div key={r.id} className="px-4 py-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {(r.variables as Record<string, string>)?.businessName ?? r.email}
+                      <p className="text-sm font-medium truncate flex items-center gap-1.5">
+                        {isWa
+                          ? <MessageCircle className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                          : null}
+                        {vars.businessName ?? (isWa ? r.phone : r.email)}
                       </p>
-                      <p className="text-xs text-muted-foreground">{r.email}</p>
+                      <p className="text-xs text-muted-foreground">{isWa ? r.phone : r.email}</p>
                     </div>
+                    {isWa && r.status === 'pending' && waLink && (
+                      <a
+                        href={waLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1 hover:bg-green-100 transition-colors shrink-0"
+                      >
+                        <MessageCircle className="h-3 w-3" /> Abrir WA
+                      </a>
+                    )}
                     <Badge
                       variant={
-                        r.status === 'opened' || r.status === 'clicked'
-                          ? 'success'
-                          : r.status === 'sent'
-                          ? 'secondary'
-                          : r.status === 'bounced'
-                          ? 'destructive'
+                        r.status === 'opened' || r.status === 'clicked' ? 'success'
+                          : r.status === 'sent' ? 'secondary'
+                          : r.status === 'bounced' ? 'destructive'
                           : 'secondary'
                       }
                     >
@@ -271,7 +296,8 @@ export function CampaignDetail({ campaignId }: Props) {
                         : r.status}
                     </Badge>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

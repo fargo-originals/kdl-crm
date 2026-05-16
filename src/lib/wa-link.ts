@@ -11,7 +11,14 @@ export function waHref(phone: string | null | undefined, text?: string): string 
 
 export function buildWaMessage(businessName: string, hasWebsite: boolean): string {
   if (!hasWebsite) {
-    return `Hola, soy Felipe de KentoDevLab. Vi que ${businessName} no tiene web propia todavía. Creamos páginas web para negocios locales desde 397€. ¿Te puedo explicar en 2 minutos?`;
+    return `Hola, soy Felipe de Kento Dev Lab. Vi que ${businessName} no tiene web propia todavía. Creamos páginas web para negocios locales desde 499€. ¿Te puedo explicar en 2 minutos?`;
   }
-  return `Hola, soy Felipe de KentoDevLab. Vi la web de ${businessName} y tengo ideas para mejorarla. ¿Tienes 2 minutos para que te cuente?`;
+  return `Hola, soy Felipe de Kento Dev Lab. Vi la web de ${businessName} y tengo ideas para mejorarla. ¿Tienes 2 minutos para que te cuente?`;
+}
+
+export function isMobilePhone(phone: string | null | undefined): boolean {
+  if (!phone) return false;
+  const digits = phone.replace(/\D/g, '');
+  const local = digits.startsWith('34') ? digits.slice(2) : digits;
+  return local.startsWith('6') || local.startsWith('7');
 }

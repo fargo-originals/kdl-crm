@@ -35,7 +35,9 @@ export const UpdateCampaignSchema = z.object({
 export const RecipientSelectionSchema = z.object({
   recipients: z.array(
     z.object({
-      email: z.string().min(1, 'Email requerido').regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email inválido'),
+      email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email inválido').optional().nullable(),
+      phone: z.string().optional().nullable(),
+      channel: z.enum(['email', 'whatsapp']).default('email'),
       contactId: z.string().uuid().optional().nullable(),
       variables: z.object({
         firstName: z.string().optional(),
@@ -46,7 +48,7 @@ export const RecipientSelectionSchema = z.object({
         websiteUrl: z.string().optional(),
         category: z.string().optional(),
       }).optional(),
-    })
+    }).refine(r => r.email || r.phone, { message: 'Se requiere email o teléfono' })
   ).min(1, 'Debes seleccionar al menos un destinatario'),
 });
 

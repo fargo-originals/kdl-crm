@@ -34,7 +34,9 @@ export async function POST(req: Request, { params }: Params) {
 
   const rows = parsed.data.recipients.map(r => ({
     campaign_id: id,
-    email: r.email,
+    email: r.email ?? null,
+    phone: r.phone ?? null,
+    channel: r.channel ?? 'email',
     contact_id: r.contactId ?? null,
     variables: r.variables ?? {},
     status: 'pending',
