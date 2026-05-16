@@ -65,8 +65,9 @@ async function fetchCrmCompanies(search: string): Promise<CrmCompany[]> {
   return Array.isArray(data) ? data : [];
 }
 
-async function fetchProspects(sector: string, webFilter: WebFilter): Promise<{ data: Prospect[]; stats: Stats }> {
+async function fetchProspects(sector: string, neighborhood: string, webFilter: WebFilter): Promise<{ data: Prospect[]; stats: Stats }> {
   const params = new URLSearchParams({ sector, limit: '300' });
+  if (neighborhood) params.set('neighborhood', neighborhood);
   if (webFilter === 'none') params.set('web', 'none');
   if (webFilter === 'has') params.set('web', 'has');
   const res = await fetch(`/api/prospecting/results?${params}`);
@@ -105,13 +106,14 @@ function channelIcon(p: Prospect) {
 interface Props {
   campaignId: string;
   sector: string;
+  neighborhood?: string | null;
   onSaved?: (count: number) => void;
   onClose?: () => void;
 }
 
 type SourceTab = 'prospects' | 'crm';
 
-export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Props) {
+export function RecipientSelector({ campaignId, sector, neighborhood, onSaved, onClose }: Props) {
   const queryClient = useQueryClient();
   const [source, setSource] = useState<SourceTab>('prospects');
   const [search, setSearch] = useState('');
@@ -121,8 +123,8 @@ export function RecipientSelector({ campaignId, sector, onSaved, onClose }: Prop
   const [selected, setSelected] = useState<SelectedRecipient[]>([]);
 
   const { data: result, isLoading } = useQuery({
-    queryKey: ['prospects-selector', sector, webFilter],
-    queryFn: () => fetchProspects(sector, webFilter),
+    queryKey: ['prospects-selector', sector, neighborhood, webFilter],
+    queryFn: () => fetchProspects(sector, neighborhood ?? '', webFilter),
   });
 
   const { data: crmCompanies = [], isLoading: crmLoading } = useQuery({

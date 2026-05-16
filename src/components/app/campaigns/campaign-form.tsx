@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,11 +34,25 @@ export function CampaignForm({ onClose }: Props) {
   const [form, setForm] = useState({
     name: '',
     sector: 'restaurantes' as keyof typeof SECTOR_LABELS,
+    neighborhood: '',
     tono: 'tu_cercano',
     templateType: 'email_1_first_contact' as keyof typeof TEMPLATE_LABELS,
     subject: '',
     bodyHtml: '',
   });
+  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
+  const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
+
+  // Cargar barrios cuando cambia el sector
+  useEffect(() => {
+    setForm(f => ({ ...f, neighborhood: '' }));
+    setLoadingNeighborhoods(true);
+    fetch(`/api/prospecting/neighborhoods?sector=${form.sector}`)
+      .then(r => r.json())
+      .then(d => setNeighborhoods(d.neighborhoods ?? []))
+      .catch(() => setNeighborhoods([]))
+      .finally(() => setLoadingNeighborhoods(false));
+  }, [form.sector]);
 
   const previewData = (() => {
     try {
@@ -126,6 +140,29 @@ export function CampaignForm({ onClose }: Props) {
                   <option key={v} value={v}>{l}</option>
                 ))}
               </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="neighborhood">
+                Barrio
+                {loadingNeighborhoods && <span className="ml-2 text-xs text-muted-foreground">Cargando...</span>}
+              </Label>
+              <Select
+                id="neighborhood"
+                value={form.neighborhood}
+                onChange={e => set('neighborhood', e.target.value)}
+                disabled={loadingNeighborhoods || neighborhoods.length === 0}
+              >
+                <option value="">Todos los barrios</option>
+                {neighborhoods.map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </Select>
+              {neighborhoods.length === 0 && !loadingNeighborhoods && (
+                <p className="text-xs text-muted-foreground">
+                  No hay prospectos aprobados para este sector
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

@@ -16,6 +16,7 @@ export const TemplateTypeSchema = z.enum([
 export const CreateCampaignSchema = z.object({
   name: r('Nombre', 200),
   sector: SectorSchema,
+  neighborhood: z.string().optional().nullable(),
   tono: TonoSchema,
   templateType: TemplateTypeSchema.optional().default('email_1_first_contact'),
   subject: r('Asunto', 300),

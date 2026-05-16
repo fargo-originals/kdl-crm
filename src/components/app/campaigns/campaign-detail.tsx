@@ -31,6 +31,7 @@ interface Campaign {
   id: string;
   name: string;
   sector: string;
+  neighborhood: string | null;
   tono: string;
   template_type: string;
   subject: string;
@@ -125,6 +126,7 @@ export function CampaignDetail({ campaignId }: Props) {
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
             {SECTOR_LABELS[campaign.sector as keyof typeof SECTOR_LABELS] ?? campaign.sector}
+            {campaign.neighborhood && <> · {campaign.neighborhood}</>}
             {' · '}
             {TEMPLATE_LABELS[campaign.template_type as keyof typeof TEMPLATE_LABELS] ?? campaign.template_type}
           </p>
@@ -155,6 +157,7 @@ export function CampaignDetail({ campaignId }: Props) {
             <RecipientSelector
               campaignId={campaignId}
               sector={campaign.sector}
+              neighborhood={campaign.neighborhood}
               onSaved={(count) => {
                 queryClient.invalidateQueries({ queryKey: ['campaign', campaignId] });
                 setShowSelector(false);
