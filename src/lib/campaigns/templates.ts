@@ -24,7 +24,7 @@ function wrap(text: string): string {
     <div style="white-space:pre-wrap;line-height:1.6">${escaped}</div>
     <hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb"/>
     <p style="font-size:12px;color:#6b7280">
-      Kento — KentoDevLab · kentodevlab.com<br/>
+      Felipe — Kento Dev Lab · kentodevlab.com<br/>
       Si no quieres recibir más correos, responde "BAJA" a este email.
     </p>
   </div>`;
@@ -44,13 +44,13 @@ He visto ${v.businessName} en ${v.neighborhood} — ${v.rating}★ con ${v.revie
 
 Lo que me sorprende es que cuando alguien os busca en el móvil, ${webLine}. La gente que descubre ${v.businessName} hoy se va sin reservar porque no encuentra dónde hacerlo.
 
-Soy Kento, monto webs para negocios como el vuestro. Una web sencilla con reservas, menú/servicios y SEO local cuesta 499 €, dominio incluido, lista en 7 días.
+Soy Felipe, de Kento Dev Lab, y monto webs para negocios como el vuestro. Una web sencilla con reservas, menú/servicios y SEO local cuesta 499 €, dominio incluido, lista en 7 días.
 
 ¿Te interesa que te enseñe en 15 min cómo quedaría la vuestra?
 
 Un saludo,
-Kento
-KentoDevLab · kentodevlab.com`;
+Felipe
+Kento Dev Lab · kentodevlab.com`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -63,12 +63,12 @@ He estado mirando ${v.businessName} en ${v.neighborhood}. ${v.rating}★ con ${v
 
 El detalle que me llamó la atención: cuando alguien busca en Google "fisioterapeuta ${v.neighborhood}" la primera página la dominan clínicas con webs optimizadas. La diferencia entre la calidad real del centro y lo que aparece online es enorme — y eso son pacientes nuevos que se van a otro sitio.
 
-Soy Kento, de KentoDevLab. Hago webs en Next.js con SEO local incluido (899 €, entrega en 10 días) y centros que las usan están captando entre 5 y 15 pacientes nuevos al mes solo por búsquedas locales.
+Soy Felipe, de Kento Dev Lab. Hago webs en Next.js con SEO local incluido (899 €, entrega en 10 días) y centros que las usan están captando entre 5 y 15 pacientes nuevos al mes solo por búsquedas locales.
 
 ¿Te puedo enviar un ejemplo y comentamos en una llamada de 15 min si encaja?
 
 Un saludo,
-Kento Dev Lab`;
+Felipe de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -81,12 +81,12 @@ Le escribo después de ver ${v.businessName} — ${v.rating}★ con ${v.reviewCo
 
 La observación que quería compartirle: los pacientes que hoy buscan dentista en ${v.neighborhood} comparan webs antes de llamar. Una web moderna con primera visita online, reseñas integradas y SEO local marca la diferencia entre que el paciente reserve con ustedes o con la clínica de la esquina.
 
-Soy Kento, de KentoDevLab. Por 1.499 € entregamos web profesional en Next.js con CRM propio (gestión de pacientes y citas) y SEO local incluido. Plazo: 2 semanas.
+Soy Felipe, de Kento Dev Lab. Por 1.499 € entregamos web profesional en Next.js con CRM propio (gestión de pacientes y citas) y SEO local incluido. Plazo: 2 semanas.
 
 ¿Tiene 20 minutos esta semana para una llamada en la que le enseñe ejemplos y hablemos de su clínica?
 
 Un cordial saludo,
-Kento Dev Lab`;
+Felipe de Kento Dev Lab`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -99,12 +99,12 @@ Le escribo después de ver ${v.businessName} en ${v.neighborhood}. La valoració
 
 Una observación: probablemente Booking y Expedia les estén llevando entre el 60 % y el 80 % de las reservas, con comisiones del 15–20 %. Una web propia bien posicionada que capte reservas directas suele recuperar un 10–15 % de ese volumen — y lo que pagaban en comisión queda en su cuenta.
 
-Soy Kento, de KentoDevLab. Trabajamos con hoteles boutique en Madrid construyendo webs en Next.js con motor de reservas integrado y SEO. El proyecto cierra en 1.499 €, entrega en 2 semanas.
+Soy Felipe, de Kento Dev Lab. Trabajamos con hoteles boutique en Madrid construyendo webs en Next.js con motor de reservas integrado y SEO. El proyecto cierra en 1.499 €, entrega en 2 semanas.
 
 ¿Le interesaría una llamada de 20 minutos para que le enseñe casos concretos y veamos si tiene sentido para ${v.businessName}?
 
 Un cordial saludo,
-Kento — KentoDevLab
+Felipe — Kento Dev Lab
 kentodevlab.com`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
@@ -129,7 +129,7 @@ Cualquiera de las 3 te está costando clientes. Te las arreglo en una web nueva 
 Si quieres que te lo cuente en 15 min, responde aquí y acordamos.
 
 Un saludo,
-Kento`;
+Felipe`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -147,7 +147,7 @@ La gente que descubre la zona y busca dónde ${v.sector === 'restaurantes' ? 'co
 ¿Llamamos 15 min para que te enseñe cómo lo hacemos?
 
 Un saludo,
-Kento`;
+Felipe`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
@@ -163,7 +163,7 @@ Te he escrito un par de veces y entiendo que no es prioridad ahora. Sin problema
 Cierro tu ficha por mi parte. Si en algún momento queréis renovar la web o queréis que os haga una auditoría gratis, escríbeme y lo retomamos.
 
 Mucha suerte con ${v.businessName},
-Kento`;
+Felipe`;
 
   return { subject, bodyText, bodyHtml: wrap(bodyText) };
 }
