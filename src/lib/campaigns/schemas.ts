@@ -34,7 +34,7 @@ export const UpdateCampaignSchema = z.object({
 export const RecipientSelectionSchema = z.object({
   recipients: z.array(
     z.object({
-      email: z.string().email('Email inválido'),
+      email: z.string().min(1, 'Email requerido').regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email inválido'),
       contactId: z.string().uuid().optional().nullable(),
       variables: z.object({
         firstName: z.string().optional(),

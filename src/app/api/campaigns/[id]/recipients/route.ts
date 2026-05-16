@@ -24,7 +24,10 @@ export async function POST(req: Request, { params }: Params) {
 
   const body = await req.json().catch(() => null);
   const parsed = RecipientSelectionSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 422 });
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map(i => i.message).join(', ') || 'Datos inválidos';
+    return NextResponse.json({ error: msg }, { status: 422 });
+  }
 
   // Reemplazar lista completa
   await supabaseServer.from('email_campaign_recipients').delete().eq('campaign_id', id);
