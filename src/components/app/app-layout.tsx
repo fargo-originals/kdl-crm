@@ -28,10 +28,11 @@ const navigation = [
   { name: "Landing CMS", href: "/landing", icon: Globe },
   { name: "Tickets", href: "/tickets", icon: Ticket },
   { name: "Tareas", href: "/tasks", icon: CheckSquare },
+  { name: "Calendario", href: "/calendar", icon: CalendarDays },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
-const PREFIX_ROUTES = ["/settings", "/prospecting", "/leads", "/landing", "/campaigns", "/inbox"];
+const PREFIX_ROUTES = ["/settings", "/prospecting", "/leads", "/landing", "/campaigns", "/inbox", "/deals", "/contacts", "/companies", "/quotes"];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   return (

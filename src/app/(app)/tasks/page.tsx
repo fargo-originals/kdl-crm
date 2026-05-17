@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Calendar, User, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, Calendar, User, Clock, CheckCircle2, Trash2, AlertCircle } from "lucide-react";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 interface Task {
   id: string;
@@ -80,7 +80,19 @@ export default function TasksPage() {
     });
   }
 
-  const filteredTasks = tasks.filter((t) => filter === "all" || t.status === filter);
+  async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar esta tarea?")) return;
+    setTasks(prev => prev.filter(t => t.id !== id));
+    await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  }
+
+  const filteredTasks = tasks.filter((t) => {
+    if (filter === "overdue") {
+      const isDone = t.status === "completed" || t.status === "done";
+      return !isDone && t.due_date && new Date(t.due_date) < new Date();
+    }
+    return filter === "all" || t.status === filter;
+  });
 
   return (
     <div className="space-y-6">
@@ -92,10 +104,17 @@ export default function TasksPage() {
         <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Nueva tarea</Button>
       </div>
 
-      <div className="flex gap-2">
-        {["all", "todo", "in_progress", "completed"].map((f) => (
-          <Button key={f} variant={filter === f ? "default" : "outline"} size="sm" onClick={() => setFilter(f)}>
-            {f === "all" ? "Todas" : statusLabels[f]}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { key: "all", label: "Todas" },
+          { key: "todo", label: "Pendiente" },
+          { key: "in_progress", label: "En progreso" },
+          { key: "completed", label: "Completadas" },
+          { key: "overdue", label: "⚠ Vencidas" },
+        ].map(({ key, label }) => (
+          <Button key={key} variant={filter === key ? "default" : "outline"} size="sm" onClick={() => setFilter(key)}
+            className={key === "overdue" && filter !== "overdue" ? "border-red-200 text-red-600 hover:bg-red-50" : ""}>
+            {label}
           </Button>
         ))}
       </div>
@@ -111,18 +130,23 @@ export default function TasksPage() {
             </div>
           ) : (
             <div className="divide-y">
-              {filteredTasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-4 py-4 hover:bg-accent/30 rounded-md px-2 cursor-pointer">
+              {filteredTasks.map((task) => {
+                const isDone = task.status === "completed" || task.status === "done";
+                const isOverdue = !isDone && task.due_date && new Date(task.due_date) < new Date();
+                return (
+                <div key={task.id} className={`flex items-center gap-4 py-4 hover:bg-accent/30 rounded-md px-2 ${isOverdue ? "border-l-2 border-red-400 pl-3" : ""}`}>
                   <button
                     onClick={() => toggleComplete(task)}
                     className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {task.status === "completed"
+                    {isDone
                       ? <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      : <Clock className="h-5 w-5" />}
+                      : isOverdue
+                        ? <AlertCircle className="h-5 w-5 text-red-500" />
+                        : <Clock className="h-5 w-5" />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>
+                    <p className={`font-medium ${isDone ? "line-through text-muted-foreground" : ""}`}>
                       {task.title}
                     </p>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5 flex-wrap">
@@ -130,9 +154,10 @@ export default function TasksPage() {
                         {priorityLabels[task.priority] || task.priority}
                       </Badge>
                       {task.due_date && (
-                        <span className="flex items-center gap-1">
+                        <span className={`flex items-center gap-1 ${isOverdue ? "text-red-500 font-medium" : ""}`}>
                           <Calendar className="h-3 w-3" />
                           {new Date(task.due_date).toLocaleDateString("es-ES")}
+                          {isOverdue && " (vencida)"}
                         </span>
                       )}
                       {task.assignee && (
@@ -146,8 +171,16 @@ export default function TasksPage() {
                       <p className="text-sm text-muted-foreground mt-1 truncate">{task.description}</p>
                     )}
                   </div>
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    className="shrink-0 text-muted-foreground hover:text-red-500 transition-colors"
+                    title="Eliminar tarea"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

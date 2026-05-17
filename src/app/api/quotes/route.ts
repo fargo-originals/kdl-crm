@@ -11,12 +11,16 @@ const SELECT = `
   contact:contacts(first_name, last_name)
 `;
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const { searchParams } = new URL(req.url);
+  const dealId = searchParams.get('deal_id');
+
   let query = supabaseServer.from('quotes').select(SELECT).order('created_at', { ascending: false });
   if (session.role === 'seller') query = query.eq('owner_id', session.sub);
+  if (dealId) query = query.eq('deal_id', dealId);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

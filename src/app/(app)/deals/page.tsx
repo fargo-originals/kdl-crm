@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, DollarSign, User, CalendarPlus, Settings2 } from "lucide-react";
+import { Plus, DollarSign, User, CalendarPlus, Settings2, ExternalLink } from "lucide-react";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { CalendarEventModal } from "@/components/app/calendar-event-modal";
 import Link from "next/link";
@@ -253,6 +253,15 @@ export default function DealsPage() {
                                     >
                                       <CalendarPlus className="h-3.5 w-3.5" />
                                     </button>
+                                    <Link
+                                      href={`/deals/${deal.id}`}
+                                      onMouseDown={e => e.stopPropagation()}
+                                      onClick={e => e.stopPropagation()}
+                                      className="text-muted-foreground hover:text-primary transition-colors"
+                                      title="Ver detalle"
+                                    >
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                    </Link>
                                   </div>
                                 </div>
                               </div>

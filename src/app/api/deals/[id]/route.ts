@@ -7,6 +7,39 @@ import { runAutomation } from "@/lib/automations/engine";
 import { writeAudit } from "@/lib/audit";
 import { fireWebhook } from "@/lib/webhooks";
 
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+
+  const { data, error } = await supabaseServer
+    .from("deals")
+    .select(`
+      *,
+      company:companies(id, name),
+      contact:contacts(id, first_name, last_name, email, phone),
+      owner:users(id, first_name, last_name)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(data);
+}
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.role === "seller") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await params;
+  const { error } = await supabaseServer.from("deals").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

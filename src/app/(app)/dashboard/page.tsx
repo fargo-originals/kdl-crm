@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSupabaseServer } from "@/lib/supabase-server";
 import { getSession } from "@/lib/auth/session";
-import { Users, Building2, DollarSign, Ticket, TrendingUp, Clock, Mail, Target, CalendarDays, Phone } from "lucide-react";
+import { Users, Building2, DollarSign, Ticket, TrendingUp, Clock, Mail, Target, CalendarDays, Phone, CheckSquare, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { waHref } from "@/lib/wa-link";
 
@@ -34,7 +34,7 @@ async function getData(session: Awaited<ReturnType<typeof getSession>>) {
   const [
     contactsRes, companiesRes, dealsRes, ticketsRes,
     pipelineRes, stagesRes,
-    leadsRes, campaignsRes, activitiesRes, appointmentsRes,
+    leadsRes, campaignsRes, activitiesRes, appointmentsRes, overdueTasksRes,
   ] = await Promise.all([
     supabase.from("contacts").select("*", { count: "exact", head: true })
       .eq(scoped ? "owner_id" : "id", scoped ? userId! : "id"),
@@ -61,6 +61,13 @@ async function getData(session: Awaited<ReturnType<typeof getSession>>) {
       .gte("confirmed_slot", todayStart.toISOString())
       .lte("confirmed_slot", todayEnd.toISOString())
       .order("confirmed_slot", { ascending: true }),
+    supabase.from("tasks")
+      .select("id, title, priority, due_date, deal_id")
+      .or(`assignee_id.eq.${userId},created_by_id.eq.${userId}`)
+      .lt("due_date", new Date().toISOString())
+      .not("status", "in", '("done","completed","cancelled")')
+      .order("due_date", { ascending: true })
+      .limit(5),
   ]);
 
   const deals = dealsRes.data ?? [];
@@ -117,6 +124,7 @@ async function getData(session: Awaited<ReturnType<typeof getSession>>) {
     campaigns: campaignsRes.data ?? [],
     activities: activitiesRes.data ?? [],
     appointments: appointmentsRes.data ?? [],
+    overdueTasks: overdueTasksRes.data ?? [],
   };
 }
 
@@ -224,6 +232,43 @@ export default async function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Overdue tasks */}
+      {d.overdueTasks.length > 0 && (
+        <Card className="border-red-200 dark:border-red-900">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <CardTitle className="text-base text-red-600 dark:text-red-400">
+                Tareas vencidas ({d.overdueTasks.length})
+              </CardTitle>
+            </div>
+            <Link href="/tasks" className="text-xs text-primary hover:underline">Ver todas →</Link>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {d.overdueTasks.map((task) => {
+                const t = task as { id: string; title: string; priority: string; due_date: string; deal_id?: string };
+                const daysOverdue = Math.floor((new Date().getTime() - new Date(t.due_date).getTime()) / 86400000);
+                return (
+                  <div key={t.id} className="flex items-center justify-between gap-2 py-1.5 border-b last:border-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CheckSquare className="h-3.5 w-3.5 text-red-500 shrink-0" />
+                      <span className="text-sm truncate">{t.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="destructive" className="text-xs">
+                        {daysOverdue === 0 ? "Hoy" : `${daysOverdue}d`}
+                      </Badge>
+                      <Link href="/tasks" className="text-xs text-primary hover:underline">Ver</Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Pipeline por stages reales */}
