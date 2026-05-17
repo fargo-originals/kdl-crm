@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Plus, Search, Calendar, User, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 interface Ticket {
   id: string;
@@ -42,6 +43,7 @@ const statusIcons: Record<string, typeof AlertCircle> = {
 const emptyForm = { title: "", description: "", priority: "medium", category: "", company_id: "" };
 
 export default function TicketsPage() {
+  const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
@@ -129,7 +131,7 @@ export default function TicketsPage() {
           {filteredTickets.map((ticket) => {
             const StatusIcon = statusIcons[ticket.status] || AlertCircle;
             return (
-              <Card key={ticket.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card key={ticket.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/tickets/${ticket.id}`)}>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">

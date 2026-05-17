@@ -11,12 +11,20 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Globe, MapPin, Phone, Pencil, X, Check,
-  Mail, ExternalLink, MessageCircle,
+  Mail, ExternalLink, MessageCircle, DollarSign, Users,
 } from "lucide-react";
+import Link from "next/link";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { waHref, buildWaMessage } from "@/lib/wa-link";
 import { CustomFieldsSection, type FieldDefinition } from "@/components/app/custom-fields/custom-fields-section";
+
+interface CompanyDeal {
+  id: string; name: string; stage: string; value: number; currency: string;
+}
+interface CompanyContact {
+  id: string; first_name: string; last_name: string; job_title: string | null; lifecycle_stage: string;
+}
 
 interface Company {
   id: string;
@@ -63,15 +71,21 @@ export default function CompanyDetailPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<Company>>({});
   const [customFieldDefs, setCustomFieldDefs] = useState<FieldDefinition[]>([]);
+  const [companyDeals, setCompanyDeals] = useState<CompanyDeal[]>([]);
+  const [companyContacts, setCompanyContacts] = useState<CompanyContact[]>([]);
 
   useEffect(() => {
     Promise.all([
       fetch(`/api/companies/${id}`).then((r) => r.json()),
       fetch("/api/settings/fields?object_type=company").then((r) => r.json()),
-    ]).then(([companyData, fieldsData]) => {
+      fetch("/api/deals").then((r) => r.json()),
+      fetch("/api/contacts").then((r) => r.json()),
+    ]).then(([companyData, fieldsData, dealsData, contactsData]) => {
       setCompany(companyData);
       setForm(companyData);
       setCustomFieldDefs(Array.isArray(fieldsData) ? fieldsData : []);
+      setCompanyDeals((Array.isArray(dealsData) ? dealsData : []).filter((d: CompanyDeal & { company_id?: string }) => d.company_id === id));
+      setCompanyContacts((Array.isArray(contactsData) ? contactsData : []).filter((c: CompanyContact & { company_id?: string }) => c.company_id === id));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [id]);
@@ -389,6 +403,66 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Contacts */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Users className="h-4 w-4" />Contactos ({companyContacts.length})
+          </CardTitle>
+          <Link href={`/contacts?company_id=${id}`}>
+            <Button variant="outline" size="sm">Ver todos</Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {companyContacts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin contactos vinculados.</p>
+          ) : (
+            <div className="divide-y">
+              {companyContacts.slice(0, 5).map(c => (
+                <Link key={c.id} href={`/contacts/${c.id}`} className="flex items-center justify-between py-2.5 hover:bg-accent/30 rounded px-1 gap-2">
+                  <div>
+                    <p className="text-sm font-medium">{c.first_name} {c.last_name}</p>
+                    {c.job_title && <p className="text-xs text-muted-foreground">{c.job_title}</p>}
+                  </div>
+                  <Badge variant="secondary" className="text-xs shrink-0">{c.lifecycle_stage}</Badge>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Deals */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />Deals ({companyDeals.length})
+          </CardTitle>
+          <Link href="/deals">
+            <Button variant="outline" size="sm">Ver pipeline</Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {companyDeals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Sin deals vinculados.</p>
+          ) : (
+            <div className="divide-y">
+              {companyDeals.map(d => (
+                <Link key={d.id} href={`/deals/${d.id}`} className="flex items-center justify-between py-2.5 hover:bg-accent/30 rounded px-1 gap-2">
+                  <div>
+                    <p className="text-sm font-medium">{d.name}</p>
+                    <p className="text-xs text-muted-foreground">{d.stage}</p>
+                  </div>
+                  <span className="text-sm font-semibold shrink-0">
+                    {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(Number(d.value))}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <p className="text-xs text-muted-foreground">
         Creada el {new Date(company.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}

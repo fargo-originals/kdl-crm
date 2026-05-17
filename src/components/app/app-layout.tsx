@@ -10,6 +10,7 @@ import {
   CalendarDays, BarChart2, FileText,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/app/theme-toggle";
+import { NotificationBell } from "@/components/app/notification-bell";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
 
@@ -110,7 +111,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <NavLinks pathname={pathname} />
           </nav>
           <div className="border-t p-4 space-y-2">
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
             <BookingButton />
             <button
               onClick={handleLogout}
@@ -147,7 +151,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
           </nav>
           <div className="border-t p-4 space-y-2">
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <NotificationBell />
+            </div>
             <BookingButton />
             <button
               onClick={handleLogout}
@@ -171,7 +178,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link href="/dashboard" className="text-lg font-bold text-primary">KDL CRM</Link>
+            <Link href="/dashboard" className="text-lg font-bold text-primary flex-1">KDL CRM</Link>
+            <NotificationBell />
           </header>
 
           {/* Extra bottom padding on mobile to avoid content behind bottom nav */}
