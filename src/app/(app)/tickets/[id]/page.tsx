@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { ActivityTimeline } from "@/components/app/activity-timeline";
+import { Breadcrumb } from "@/components/app/breadcrumb";
 
 interface Ticket {
   id: string;
@@ -132,6 +133,7 @@ export default function TicketDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0">
+            <Breadcrumb items={[{ label: "Tickets", href: "/tickets" }, { label: `#${ticket.id.slice(0, 8)} ${ticket.title}` }]} />
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs text-muted-foreground font-mono">#{ticket.id.slice(0, 8)}</span>
               <Badge variant={currentStatus.badge}>{currentStatus.label}</Badge>

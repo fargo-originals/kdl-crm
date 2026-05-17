@@ -14,6 +14,7 @@ import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { CustomFieldsSection, type FieldDefinition } from "@/components/app/custom-fields/custom-fields-section";
 import { waHref, buildWaMessage } from "@/lib/wa-link";
 import { ActivityTimeline } from "@/components/app/activity-timeline";
+import { Breadcrumb } from "@/components/app/breadcrumb";
 
 interface Contact {
   id: string;
@@ -113,6 +114,7 @@ export default function ContactDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
+            <Breadcrumb items={[{ label: "Contactos", href: "/contacts" }, { label: fullName }]} />
             <h1 className="text-3xl font-bold">{fullName}</h1>
             <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
               <Badge variant={LIFECYCLE_VARIANTS[contact.lifecycle_stage] ?? "default"}>

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { ActivityTimeline } from "@/components/app/activity-timeline";
+import { Breadcrumb } from "@/components/app/breadcrumb";
 
 interface Deal {
   id: string;
@@ -183,6 +184,7 @@ export default function DealDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0">
+            <Breadcrumb items={[{ label: "Pipeline", href: "/deals" }, { label: deal.name }]} />
             {editing ? (
               <Input
                 className="text-2xl font-bold h-auto py-1 text-2xl"

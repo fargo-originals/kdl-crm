@@ -14,6 +14,7 @@ import {
   Mail, ExternalLink, MessageCircle, DollarSign, Users,
 } from "lucide-react";
 import Link from "next/link";
+import { Breadcrumb } from "@/components/app/breadcrumb";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { waHref, buildWaMessage } from "@/lib/wa-link";
@@ -171,6 +172,7 @@ export default function CompanyDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
+            <Breadcrumb items={[{ label: "Empresas", href: "/companies" }, { label: company.name }]} />
             <h1 className="text-3xl font-bold">{company.name}</h1>
             <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground flex-wrap">
               {company.industry && <Badge variant="secondary">{company.industry}</Badge>}
