@@ -9,6 +9,7 @@ import {
   CheckSquare, Settings, Radar, LogOut, Inbox, Globe, Upload, Menu, X, Mail, MailOpen,
   CalendarDays, BarChart2, FileText,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/app/theme-toggle";
 import { cn } from "@/lib/utils";
 import { QueryProvider } from "@/components/app/query-provider";
 
@@ -107,7 +108,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             <NavLinks pathname={pathname} />
           </nav>
-          <div className="border-t p-4 space-y-1">
+          <div className="border-t p-4 space-y-2">
+            <ThemeToggle />
             <BookingButton />
             <button
               onClick={handleLogout}
@@ -143,7 +145,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
           </nav>
-          <div className="border-t p-4 space-y-1">
+          <div className="border-t p-4 space-y-2">
+            <ThemeToggle />
             <BookingButton />
             <button
               onClick={handleLogout}
