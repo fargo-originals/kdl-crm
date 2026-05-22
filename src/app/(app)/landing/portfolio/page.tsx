@@ -110,7 +110,8 @@ export default function PortfolioPage() {
   }
 
   async function togglePublished(id: string, published: boolean) {
-    await fetch(`/api/landing/portfolio/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !published }) });
+    const res = await fetch(`/api/landing/portfolio/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ published: !published }) });
+    if (!res.ok) { alert(`Error al guardar (${res.status}). Recarga la página e inténtalo de nuevo.`); return; }
     load();
   }
 
