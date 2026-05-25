@@ -64,6 +64,7 @@ export default function LeadDetailPage() {
   const [sessions, setSessions] = useState<AgentSession[]>([]);
   const [saving, setSaving] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calling, setCalling] = useState(false);
 
   useEffect(() => {
     fetch(`/api/leads/${id}`).then(r => r.json()).then(setLead);
@@ -82,6 +83,22 @@ export default function LeadDetailPage() {
     const updated = await fetch(`/api/leads/${id}`).then(r => r.json());
     setLead(updated);
     setSaving(false);
+  }
+
+  async function startCall() {
+    if (calling) return;
+    setCalling(true);
+    try {
+      const res = await fetch(`/api/crm/leads/${id}/call`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error ?? 'No se pudo iniciar la llamada');
+      } else {
+        alert('Llamada en curso. El agente de voz contactará al lead.');
+      }
+    } finally {
+      setCalling(false);
+    }
   }
 
   async function assignSelf() {
@@ -117,6 +134,17 @@ export default function LeadDetailPage() {
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[lead.status] ?? 'bg-muted'}`}>
             {lead.status}
           </span>
+          {lead.phone && (
+            <button
+              onClick={startCall}
+              disabled={calling}
+              className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm hover:bg-accent disabled:opacity-50"
+              title="Lanzar llamada del agente de voz"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              {calling ? 'Llamando…' : 'Llamar ahora'}
+            </button>
+          )}
           <button
             onClick={() => setCalendarOpen(true)}
             className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm hover:bg-accent"

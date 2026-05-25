@@ -300,3 +300,4 @@ export const scoringRules = pgTable('scoring_rules', {
 
 export * from './landing';
 export * from './agents';
+export * from './calls';

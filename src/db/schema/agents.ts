@@ -2,7 +2,7 @@ import { pgTable, uuid, text, timestamp, jsonb, boolean, integer, pgEnum } from 
 import { users, emailCampaignRecipients } from './index';
 import { leadInquiries } from './landing';
 
-export const agentChannelEnum = pgEnum('agent_channel', ['whatsapp', 'email']);
+export const agentChannelEnum = pgEnum('agent_channel', ['whatsapp', 'email', 'phone']);
 export const agentSessionStatusEnum = pgEnum('agent_session_status', ['active', 'awaiting_human', 'closed']);
 export const appointmentStatusEnum = pgEnum('appointment_status', ['proposed', 'confirmed', 'cancelled', 'rescheduled', 'no_show']);
 

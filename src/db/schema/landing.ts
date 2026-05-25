@@ -139,6 +139,9 @@ export const leadInquiries = pgTable('lead_inquiries', {
   agentSessionId: uuid('agent_session_id'),
   qualificationData: jsonb('qualification_data').default({}),
   score: integer('score').default(0),
+  callAttempts: integer('call_attempts').default(0),
+  lastCallAt: timestamp('last_call_at'),
+  doNotCall: boolean('do_not_call').default(false),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
