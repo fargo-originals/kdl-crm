@@ -144,7 +144,12 @@ export default function LeadsPage() {
 
   async function bulkDelete() {
     if (!confirm(`¿Eliminar ${selected.size} lead${selected.size !== 1 ? 's' : ''}?`)) return;
-    await fetch('/api/leads/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [...selected], action: 'delete' }) });
+    const res = await fetch('/api/leads/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [...selected], action: 'delete' }) });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? 'No se pudo eliminar');
+      return;
+    }
     setSelected(new Set()); load();
   }
 

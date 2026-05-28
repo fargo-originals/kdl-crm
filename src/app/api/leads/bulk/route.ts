@@ -46,10 +46,17 @@ export async function POST(req: Request) {
     if (session.role === 'seller') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    await supabaseServer
+
+    await supabaseServer.from('appointments').delete().in('lead_id', ids);
+    await supabaseServer.from('agent_sessions').delete().in('lead_id', ids);
+    await supabaseServer.from('voice_calls').delete().in('lead_id', ids);
+
+    const { error: delError } = await supabaseServer
       .from('lead_inquiries')
       .delete()
       .in('id', ids);
+
+    if (delError) return NextResponse.json({ error: delError.message }, { status: 500 });
 
     affected = ids.length;
 
