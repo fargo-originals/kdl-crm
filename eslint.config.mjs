@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Servicio independiente con su propio tsconfig/eslint.
+    "services/**",
   ]),
 ]);
 
