@@ -34,6 +34,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  if (updated?.contact_id) {
+    const contactUpdates: Record<string, unknown> = {};
+    if ('phone' in body) contactUpdates.phone = body.phone;
+    if ('email' in body) contactUpdates.email = body.email;
+    if ('full_name' in body && typeof body.full_name === 'string') {
+      const parts = body.full_name.trim().split(/\s+/);
+      contactUpdates.first_name = parts[0] ?? '';
+      contactUpdates.last_name = parts.slice(1).join(' ') || '';
+    }
+    if (Object.keys(contactUpdates).length > 0) {
+      await supabaseServer
+        .from('contacts')
+        .update({ ...contactUpdates, updated_at: new Date().toISOString() })
+        .eq('id', updated.contact_id);
+    }
+  }
+
   // Recalculate score in background (non-blocking)
   const ownerId = updated.assigned_to ?? session.sub;
   calculateScore(updated as Record<string, unknown>, ownerId, 'lead')

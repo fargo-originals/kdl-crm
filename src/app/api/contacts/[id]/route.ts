@@ -39,5 +39,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const leadUpdates: Record<string, unknown> = {};
+  if ('phone' in updates) leadUpdates.phone = updates.phone;
+  if ('email' in updates) leadUpdates.email = updates.email;
+  if ('first_name' in updates || 'last_name' in updates) {
+    const fn = (updates.first_name as string | undefined) ?? data.first_name ?? '';
+    const ln = (updates.last_name as string | undefined) ?? data.last_name ?? '';
+    leadUpdates.full_name = `${fn} ${ln}`.trim();
+  }
+  if (Object.keys(leadUpdates).length > 0) {
+    await supabaseServer
+      .from('lead_inquiries')
+      .update({ ...leadUpdates, updated_at: new Date().toISOString() })
+      .eq('contact_id', id);
+  }
+
   return NextResponse.json(data);
 }

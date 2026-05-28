@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { MessageCircle, Mail, Phone, Bot, User, CalendarPlus } from 'lucide-react';
+import { MessageCircle, Mail, Phone, Bot, User, CalendarPlus, Pencil } from 'lucide-react';
 import { PageSpinner } from '@/components/ui/spinner';
 import { CalendarEventModal } from '@/components/app/calendar-event-modal';
+import { LeadEditModal } from '@/components/app/lead-edit-modal';
 import { ActivityTimeline } from '@/components/app/activity-timeline';
 
 interface Lead {
@@ -64,14 +65,19 @@ export default function LeadDetailPage() {
   const [sessions, setSessions] = useState<AgentSession[]>([]);
   const [saving, setSaving] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [calling, setCalling] = useState(false);
 
-  useEffect(() => {
+  const reloadLead = useCallback(() => {
     fetch(`/api/leads/${id}`).then(r => r.json()).then(setLead);
+  }, [id]);
+
+  useEffect(() => {
+    reloadLead();
     fetch(`/api/agent-sessions?lead_id=${id}`).then(r => r.json()).then(data => {
       if (Array.isArray(data)) setSessions(data);
     });
-  }, [id]);
+  }, [id, reloadLead]);
 
   async function updateStatus(status: string) {
     setSaving(true);
@@ -152,6 +158,14 @@ export default function LeadDetailPage() {
           >
             <CalendarPlus className="h-3.5 w-3.5" />
             Agendar
+          </button>
+          <button
+            onClick={() => setEditOpen(true)}
+            className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm hover:bg-accent"
+            title="Editar datos del lead"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Editar
           </button>
           <button onClick={() => router.back()} className="rounded-md border px-4 py-2 text-sm hover:bg-accent">
             ← Volver
@@ -295,6 +309,25 @@ export default function LeadDetailPage() {
         defaultTitle={`Reunión con ${lead.full_name}`}
         defaultEmail={lead.email ?? ""}
         leadId={id}
+      />
+
+      <LeadEditModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        leadId={id}
+        initial={{
+          full_name: lead.full_name,
+          email: lead.email,
+          phone: lead.phone ?? "",
+          business_name: lead.business_name ?? "",
+          business_type: lead.business_type ?? "",
+          service_interest: lead.service_interest ?? "",
+          budget_range: lead.budget_range ?? "",
+          preferred_channel: lead.preferred_channel,
+          preferred_time_window: lead.preferred_time_window ?? "",
+          message: lead.message ?? "",
+        }}
+        onSaved={reloadLead}
       />
     </div>
   );
