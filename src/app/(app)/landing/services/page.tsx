@@ -28,11 +28,12 @@ export default function ServicesPage() {
   }
 
   async function togglePublished(id: string, published: boolean) {
-    await fetch(`/api/landing/services/${id}`, {
+    const res = await fetch(`/api/landing/services/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ published: !published }),
     });
+    if (!res.ok) { alert(`Error al guardar (${res.status}). Recarga la página e inténtalo de nuevo.`); return; }
     load();
   }
 
