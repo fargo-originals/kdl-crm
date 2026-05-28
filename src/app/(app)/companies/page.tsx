@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Globe, MapPin, Users, Phone, ExternalLink, X } from "lucide-react";
+import { Plus, Search, Globe, MapPin, Users, Phone, ExternalLink, X, CheckSquare, UserPlus } from "lucide-react";
 import { FaInstagram, FaFacebook, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 import { Spinner, PageSpinner } from "@/components/ui/spinner";
 import { waHref, buildWaMessage } from "@/lib/wa-link";
@@ -19,6 +19,7 @@ interface Company {
   id: string;
   name: string;
   domain: string | null;
+  email: string | null;
   industry: string | null;
   size: string | null;
   city: string | null;
@@ -72,6 +73,9 @@ export default function CompaniesPage() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [creatingLeads, setCreatingLeads] = useState(false);
 
   useEffect(() => {
     fetch("/api/companies/filters")
@@ -93,6 +97,40 @@ export default function CompaniesPage() {
   }, [industry, neighborhood, search]);
 
   useEffect(() => { loadCompanies(); }, [industry, neighborhood]);
+
+  function toggleSelect(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelected(new Set());
+  }
+
+  async function handleCreateLeads() {
+    if (selected.size === 0 || creatingLeads) return;
+    setCreatingLeads(true);
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyIds: Array.from(selected) }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✓ ${data.created} lead${data.created !== 1 ? 's' : ''} creado${data.created !== 1 ? 's' : ''} correctamente.`);
+        exitSelectMode();
+      } else {
+        alert(data.error ?? 'No se pudieron crear los leads');
+      }
+    } finally {
+      setCreatingLeads(false);
+    }
+  }
 
   async function handleCreate() {
     if (!form.name) return;
@@ -125,7 +163,13 @@ export default function CompaniesPage() {
           <h1 className="text-3xl font-bold">Empresas</h1>
           <p className="text-muted-foreground">Gestiona tus cuentas empresariales</p>
         </div>
-        <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Nueva empresa</Button>
+        <div className="flex items-center gap-2">
+          <Button variant={selectMode ? "secondary" : "outline"} onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}>
+            <CheckSquare className="mr-2 h-4 w-4" />
+            {selectMode ? "Cancelar selección" : "Seleccionar"}
+          </Button>
+          <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Nueva empresa</Button>
+        </div>
       </div>
 
       {/* Barra de filtros */}
@@ -202,12 +246,18 @@ export default function CompaniesPage() {
             const fb = ensureHttps(company.facebook);
             const li = ensureHttps(company.linkedin);
             const web = ensureHttps(company.website);
+            const isSelected = selected.has(company.id);
             return (
               <div
                 key={company.id}
-                className="relative flex flex-col rounded-lg border bg-card text-sm transition-colors hover:shadow-md cursor-pointer"
-                onClick={() => router.push(`/companies/${company.id}`)}
+                className={`relative flex flex-col rounded-lg border bg-card text-sm transition-colors hover:shadow-md cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
+                onClick={() => selectMode ? toggleSelect(company.id) : router.push(`/companies/${company.id}`)}
               >
+                {selectMode && (
+                  <div className={`absolute top-2 right-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'bg-background border-muted-foreground'}`}>
+                    {isSelected && <span className="text-primary-foreground text-xs font-bold">✓</span>}
+                  </div>
+                )}
                 <div className="h-20 w-full overflow-hidden rounded-t-lg bg-muted flex items-center justify-center shrink-0">
                   <span className="text-2xl font-bold text-muted-foreground/30 select-none">
                     {company.name.charAt(0).toUpperCase()}
@@ -282,6 +332,20 @@ export default function CompaniesPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Barra flotante de selección */}
+      {selectMode && selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full border bg-card shadow-lg px-5 py-3">
+          <span className="text-sm font-medium">{selected.size} empresa{selected.size !== 1 ? 's' : ''} seleccionada{selected.size !== 1 ? 's' : ''}</span>
+          <Button size="sm" variant="outline" onClick={exitSelectMode}>
+            <X className="h-3.5 w-3.5 mr-1" /> Cancelar
+          </Button>
+          <Button size="sm" onClick={handleCreateLeads} disabled={creatingLeads}>
+            <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+            {creatingLeads ? 'Creando...' : `Crear lead${selected.size !== 1 ? 's' : ''}`}
+          </Button>
         </div>
       )}
 
