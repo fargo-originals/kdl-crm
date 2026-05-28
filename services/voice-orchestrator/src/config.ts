@@ -4,7 +4,7 @@ export const config = {
   port: Number(process.env.PORT ?? 8080),
   publicUrl: process.env.PUBLIC_URL ?? '',
   sharedSecret: process.env.VOICE_SHARED_SECRET ?? '',
-  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   telnyx: {
     apiKey: process.env.TELNYX_API_KEY ?? '',
     connectionId: process.env.TELNYX_CONNECTION_ID ?? '',
