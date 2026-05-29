@@ -2,6 +2,7 @@ import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { QuantumSpinner } from "@/components/ui/quantum-spinner";
 
 const spinnerVariants = cva("animate-spin", {
   variants: {
@@ -44,11 +45,28 @@ const Spinner = React.forwardRef<SVGSVGElement, SpinnerProps>(
 );
 Spinner.displayName = "Spinner";
 
-interface PageSpinnerProps extends SpinnerProps {
+interface PageSpinnerProps {
   message?: string;
   className?: string;
   containerClassName?: string;
+  size?: SpinnerProps["size"];
+  tone?: SpinnerProps["tone"];
 }
+
+const quantumSizeMap: Record<NonNullable<SpinnerProps["size"]>, number> = {
+  xs: 18,
+  sm: 28,
+  md: 45,
+  lg: 60,
+  xl: 80,
+};
+
+const quantumToneMap: Record<NonNullable<SpinnerProps["tone"]>, string> = {
+  default: "text-foreground",
+  muted: "text-muted-foreground",
+  primary: "text-primary",
+  current: "text-current",
+};
 
 function PageSpinner({
   message,
@@ -56,7 +74,6 @@ function PageSpinner({
   containerClassName,
   size = "md",
   tone = "muted",
-  ...props
 }: PageSpinnerProps) {
   return (
     <div
@@ -65,7 +82,10 @@ function PageSpinner({
         containerClassName
       )}
     >
-      <Spinner size={size} tone={tone} className={className} {...props} />
+      <QuantumSpinner
+        size={quantumSizeMap[size ?? "md"]}
+        className={cn(quantumToneMap[tone ?? "muted"], className)}
+      />
       {message ? (
         <p className="text-sm text-muted-foreground">{message}</p>
       ) : null}
