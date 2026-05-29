@@ -3,22 +3,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      "l-quantum": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          size?: string | number;
-          speed?: string | number;
-          color?: string;
-        },
-        HTMLElement
-      >;
-    }
-  }
-}
-
 export interface QuantumSpinnerProps {
   size?: number;
   speed?: number;
