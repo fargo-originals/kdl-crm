@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url TEXT,
   phone TEXT,
   active BOOLEAN DEFAULT true,
+  password_hash TEXT,
+  google_id TEXT UNIQUE,
+  email_verified BOOLEAN NOT NULL DEFAULT false,
+  last_login_at TIMESTAMPTZ,
+  notification_preferences JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
