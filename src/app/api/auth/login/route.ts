@@ -13,11 +13,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
   }
 
-  const { data: user } = await supabaseServer
+  const { data: user, error } = await supabaseServer
     .from('users')
     .select('id, email, role, password_hash, active, totp_enabled')
     .eq('email', email.toLowerCase().trim())
     .maybeSingle();
+
+  if (error) {
+    console.error('[auth/login] DB error:', error.message);
+    return NextResponse.json({ error: 'Login is temporarily unavailable' }, { status: 500 });
+  }
 
   if (!user || !user.password_hash) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
